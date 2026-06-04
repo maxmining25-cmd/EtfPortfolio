@@ -423,9 +423,28 @@ export async function getQuotesForTickers(
   if (tickers.length === 0) return result;
   
   if (isDemoMode) {
-    tickers.forEach(ticker => {
+    // Try loading real bundled ETF data from /data/etf/{TICKER}.json
+    // Falls back to mock prices for tickers without bundled data
+    await Promise.all(tickers.map(async (ticker) => {
+      const cleanTicker = cleanYahooTicker(ticker).toUpperCase();
+      try {
+        const res = await fetch(`/data/etf/${cleanTicker}.json`);
+        if (res.ok) {
+          const rows: { d: string; c: number; v: number }[] = await res.json();
+          const filtered = rows.filter(r => r.d >= startDate && r.d <= endDate);
+          if (filtered.length > 0) {
+            result[ticker] = {
+              dates: filtered.map(r => r.d),
+              prices: filtered.map(r => r.c)
+            };
+            return;
+          }
+        }
+      } catch (_) {
+        // Bundled data not available — fall through to mock
+      }
       result[ticker] = generateMockPrices(ticker, startDate, endDate);
-    });
+    }));
     return result;
   }
 

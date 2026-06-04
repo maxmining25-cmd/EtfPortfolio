@@ -276,16 +276,63 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
   const [csvPreviewMsg, setCsvPreviewMsg] = useState<string | null>(null);
   const [csvPreviewError, setCsvPreviewError] = useState<string | null>(null);
 
-  // Predefined Popular Ticker Directory
+  // Predefined Popular Ticker Directory (matches bundled /data/etf/ JSON files)
   const popularAssets = [
-    { ticker: 'SPY', name: 'S&P 500 Index', type: 'etf' },
-    { ticker: 'QQQ', name: 'Nasdaq 100 Index', type: 'etf' },
+    // Broad Market
+    { ticker: 'SPY', name: 'SPDR S&P 500', type: 'etf' },
+    { ticker: 'QQQ', name: 'Invesco QQQ Nasdaq 100', type: 'etf' },
+    { ticker: 'IWM', name: 'iShares Russell 2000', type: 'etf' },
+    { ticker: 'VTI', name: 'Vanguard Total Stock Market', type: 'etf' },
+    { ticker: 'VOO', name: 'Vanguard S&P 500', type: 'etf' },
+    { ticker: 'DIA', name: 'SPDR Dow Jones Industrial', type: 'etf' },
+    { ticker: 'IVV', name: 'iShares Core S&P 500', type: 'etf' },
+    // Sectors
+    { ticker: 'XLK', name: 'Technology Sector', type: 'etf' },
+    { ticker: 'XLF', name: 'Financial Sector', type: 'etf' },
+    { ticker: 'XLE', name: 'Energy Sector', type: 'etf' },
+    { ticker: 'XLV', name: 'Health Care Sector', type: 'etf' },
+    { ticker: 'XLY', name: 'Consumer Discretionary', type: 'etf' },
+    { ticker: 'XLP', name: 'Consumer Staples', type: 'etf' },
+    { ticker: 'XLI', name: 'Industrial Sector', type: 'etf' },
+    { ticker: 'XLB', name: 'Materials Sector', type: 'etf' },
+    { ticker: 'XLU', name: 'Utilities Sector', type: 'etf' },
+    { ticker: 'XLRE', name: 'Real Estate Sector', type: 'etf' },
+    { ticker: 'XLC', name: 'Communication Services', type: 'etf' },
+    // Bonds
     { ticker: 'TLT', name: '20+ Year Treasury', type: 'etf' },
-    { ticker: 'GLD', name: 'Gold Shares', type: 'metal' },
-    { ticker: 'SLV', name: 'Silver Shares', type: 'metal' },
-    { ticker: 'UUP', name: 'US Dollar Index', type: 'currency' },
-    { ticker: 'FXE', name: 'Euro Currency Shares', type: 'currency' },
-    { ticker: 'FXY', name: 'Yen Currency Shares', type: 'currency' },
+    { ticker: 'AGG', name: 'US Aggregate Bond', type: 'etf' },
+    { ticker: 'BND', name: 'Vanguard Total Bond', type: 'etf' },
+    { ticker: 'SHY', name: '1-3 Year Treasury', type: 'etf' },
+    { ticker: 'LQD', name: 'Investment Grade Corp Bond', type: 'etf' },
+    { ticker: 'HYG', name: 'High Yield Corp Bond', type: 'etf' },
+    { ticker: 'TIP', name: 'TIPS Bond', type: 'etf' },
+    // Country / Region
+    { ticker: 'EWJ', name: 'MSCI Japan', type: 'etf' },
+    { ticker: 'EWZ', name: 'MSCI Brazil', type: 'etf' },
+    { ticker: 'EWG', name: 'MSCI Germany', type: 'etf' },
+    { ticker: 'FXI', name: 'China Large-Cap', type: 'etf' },
+    { ticker: 'EWA', name: 'MSCI Australia', type: 'etf' },
+    { ticker: 'EWU', name: 'MSCI United Kingdom', type: 'etf' },
+    { ticker: 'EEM', name: 'MSCI Emerging Markets', type: 'etf' },
+    { ticker: 'INDA', name: 'MSCI India', type: 'etf' },
+    { ticker: 'EWY', name: 'MSCI South Korea', type: 'etf' },
+    { ticker: 'EWC', name: 'MSCI Canada', type: 'etf' },
+    { ticker: 'EWW', name: 'MSCI Mexico', type: 'etf' },
+    { ticker: 'VWO', name: 'Vanguard Emerging Markets', type: 'etf' },
+    // Metals & Commodities
+    { ticker: 'GLD', name: 'SPDR Gold Shares', type: 'metal' },
+    { ticker: 'SLV', name: 'iShares Silver Trust', type: 'metal' },
+    { ticker: 'GDX', name: 'VanEck Gold Miners', type: 'metal' },
+    { ticker: 'IAU', name: 'iShares Gold Trust', type: 'metal' },
+    { ticker: 'PPLT', name: 'Physical Platinum', type: 'metal' },
+    { ticker: 'COPX', name: 'Global X Copper Miners', type: 'metal' },
+    { ticker: 'DBC', name: 'Invesco DB Commodity', type: 'metal' },
+    // Crypto
+    { ticker: 'BITO', name: 'ProShares Bitcoin Strategy', type: 'crypto' },
+    { ticker: 'IBIT', name: 'iShares Bitcoin Trust', type: 'crypto' },
+    { ticker: 'GBTC', name: 'Grayscale Bitcoin Trust', type: 'crypto' },
+    { ticker: 'ETHE', name: 'Grayscale Ethereum Trust', type: 'crypto' },
+    { ticker: 'FBTC', name: 'Fidelity Bitcoin', type: 'crypto' },
   ];
 
   const fetchQuotes = async (tickerQuery?: string) => {
