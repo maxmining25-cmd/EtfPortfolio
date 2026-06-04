@@ -690,20 +690,48 @@ export async function adminUpsertQuotes(quotes: Partial<DBQuote>[]): Promise<{ s
     const list = localStorage.getItem('aurawealth_demo_quotes');
     const customQuotes = list ? JSON.parse(list) : [];
     
-    const newQuotes: DBQuote[] = quotes.map(q => ({
-      id: 'quote-' + Math.random().toString(36).substring(2, 9),
-      ticker: (q.ticker || 'SPY').toUpperCase(),
-      date: q.date || new Date().toISOString().split('T')[0],
-      adj_close: Number(q.adj_close) || 100.0,
-      volume: q.volume !== undefined && q.volume !== null ? Number(q.volume) : null
-    }));
+    const existingMap = new Map<string, DBQuote>();
+    customQuotes.forEach((q: DBQuote) => {
+      existingMap.set(`${q.ticker.toUpperCase()}-${q.date}`, q);
+    });
 
-    const keyMap = new Set(newQuotes.map(q => `${q.ticker}-${q.date}`));
-    const remaining = customQuotes.filter((q: DBQuote) => !keyMap.has(`${q.ticker}-${q.date}`));
-    const merged = [...remaining, ...newQuotes];
+    const quotesToInsert: DBQuote[] = [];
+    let newOrModifiedCount = 0;
     
+    quotes.forEach(q => {
+      const tickerClean = (q.ticker || 'SPY').toUpperCase();
+      const dateClean = q.date || new Date().toISOString().split('T')[0];
+      const adjCloseClean = Number(q.adj_close) || 100.0;
+      const volumeClean = q.volume !== undefined && q.volume !== null ? Number(q.volume) : null;
+      
+      const key = `${tickerClean}-${dateClean}`;
+      const existing = existingMap.get(key);
+      
+      if (!existing) {
+        quotesToInsert.push({
+          id: 'quote-' + Math.random().toString(36).substring(2, 9),
+          ticker: tickerClean,
+          date: dateClean,
+          adj_close: adjCloseClean,
+          volume: volumeClean
+        });
+        newOrModifiedCount++;
+      } else {
+        const priceDiff = Math.abs(existing.adj_close - adjCloseClean);
+        const isPriceChanged = priceDiff > 1e-4;
+        const isVolumeChanged = existing.volume !== volumeClean;
+        
+        if (isPriceChanged || isVolumeChanged) {
+          existing.adj_close = adjCloseClean;
+          existing.volume = volumeClean;
+          newOrModifiedCount++;
+        }
+      }
+    });
+
+    const merged = [...customQuotes, ...quotesToInsert];
     localStorage.setItem('aurawealth_demo_quotes', JSON.stringify(merged));
-    return { success: true, count: newQuotes.length };
+    return { success: true, count: newOrModifiedCount };
   }
 
   if (!supabase) throw new Error('Supabase client not initialized.');

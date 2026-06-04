@@ -235,11 +235,34 @@ async function backfillQuotes(ticker: string, startDateStr: string, reasonRef?: 
 
   if (!results || results.length === 0) return 0;
 
-  // Map to DB rows structure
+  // 1. Fetch existing quotes in this date range to identify new/modified entries
+  const allDates = results.map(row => new Date(row.date).toISOString().split('T')[0]).sort();
+  const minDate = allDates[0];
+  const maxDate = allDates[allDates.length - 1];
+
+  let existingMap = new Map<string, { adj_close: number; volume: number | null }>();
+  try {
+    const { data: existingQuotes } = await supabaseAdmin
+      .from('quotes')
+      .select('date, adj_close, volume')
+      .eq('ticker', ticker)
+      .gte('date', minDate)
+      .lte('date', maxDate);
+
+    if (existingQuotes) {
+      existingQuotes.forEach((q: any) => {
+        existingMap.set(q.date, { adj_close: Number(q.adj_close), volume: q.volume });
+      });
+    }
+  } catch (fetchErr) {
+    console.error('Failed to fetch existing quotes for deduplication comparison:', fetchErr);
+    // Continue without deduplication on error
+  }
+
+  // 2. Map and filter: keep only new or modified quotes
   const quoteRows = results
     .filter(row => row.adjClose !== undefined && row.adjClose !== null)
     .map(row => {
-      // Format Date object to YYYY-MM-DD
       const dateString = new Date(row.date).toISOString().split('T')[0];
       return {
         ticker: ticker,
@@ -247,6 +270,16 @@ async function backfillQuotes(ticker: string, startDateStr: string, reasonRef?: 
         adj_close: Number(row.adjClose),
         volume: row.volume || null
       };
+    })
+    .filter(row => {
+      const existing = existingMap.get(row.date);
+      if (!existing) return true; // New entry!
+      
+      const priceDiff = Math.abs(existing.adj_close - row.adj_close);
+      const isPriceChanged = priceDiff > 1e-4;
+      const isVolumeChanged = existing.volume !== row.volume;
+      
+      return isPriceChanged || isVolumeChanged; // Modified entry!
     });
 
   if (quoteRows.length === 0) return 0;

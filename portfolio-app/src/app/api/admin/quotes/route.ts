@@ -68,12 +68,50 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: true, count: 0, message: 'Empty quotes array provided.' });
       }
 
-      const rows = quotes.map((q: any) => ({
-        ticker: q.ticker.toUpperCase(),
-        date: q.date,
-        adj_close: Number(q.adj_close),
-        volume: q.volume ? Number(q.volume) : null
-      }));
+      const ticker = quotes[0].ticker.toUpperCase();
+      const dates = quotes.map((q: any) => q.date).sort();
+      const minDate = dates[0];
+      const maxDate = dates[dates.length - 1];
+
+      let existingMap = new Map<string, { adj_close: number; volume: number | null }>();
+      try {
+        const { data: existingQuotes } = await supabaseAdmin!
+          .from('quotes')
+          .select('date, adj_close, volume')
+          .eq('ticker', ticker)
+          .gte('date', minDate)
+          .lte('date', maxDate);
+
+        if (existingQuotes) {
+          existingQuotes.forEach((q: any) => {
+            existingMap.set(q.date, { adj_close: Number(q.adj_close), volume: q.volume });
+          });
+        }
+      } catch (fetchErr) {
+        console.error('Failed to fetch existing quotes for batch upload comparison:', fetchErr);
+      }
+
+      const rows = quotes
+        .map((q: any) => ({
+          ticker: q.ticker.toUpperCase(),
+          date: q.date,
+          adj_close: Number(q.adj_close),
+          volume: q.volume ? Number(q.volume) : null
+        }))
+        .filter((row: any) => {
+          const existing = existingMap.get(row.date);
+          if (!existing) return true; // New!
+          
+          const priceDiff = Math.abs(existing.adj_close - row.adj_close);
+          const isPriceChanged = priceDiff > 1e-4;
+          const isVolumeChanged = existing.volume !== row.volume;
+          
+          return isPriceChanged || isVolumeChanged; // Modified!
+        });
+
+      if (rows.length === 0) {
+        return NextResponse.json({ success: true, count: 0, message: 'All quotes in file are already up to date.' });
+      }
 
       const { data, error } = await supabaseAdmin!
         .from('quotes')

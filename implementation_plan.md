@@ -62,14 +62,14 @@ We will expand the ETFPortfolio application's analytical depth to match industry
 #### [MODIFY] [dbClient.ts](file:///c:/Users/MMonakhov/Documents/ChatAI/EtfPortfolio/portfolio-app/src/utils/dbClient.ts)
 * Expand the `initializeDemoData()` function to include 8 default portfolios and their respective asset allocations.
 * Update `getQuotesForTickers` to run search queries using cleaned tickers, and map matching results back to original ticker keys returned to the backtest client.
-* Add `adminUpsertQuotes(quotes)` helper function to support bulk insert/upsert of EOD quotes in both Supabase database and Demo offline mode.
+* Add `adminUpsertQuotes(quotes)` helper function to support bulk insert/upsert of EOD quotes in both Supabase database and Demo offline mode. Compares prices and volumes, and only writes or updates new or modified entries in local storage.
 
 #### [MODIFY] [/api/admin/quotes/route.ts](file:///c:/Users/MMonakhov/Documents/ChatAI/EtfPortfolio/portfolio-app/src/app/api/admin/quotes/route.ts)
-* Update POST handler to detect `{ quotes: [...] }` arrays and execute batch `upsert` queries to database, resolving conflicts on `(ticker, date)`.
+* Update POST handler to detect `{ quotes: [...] }` arrays and execute batch `upsert` queries to database. Compares uploaded quotes with existing database records, filtering out identical duplicates to write only new or modified entries.
 
 #### [MODIFY] [/api/cron/sync/route.ts](file:///c:/Users/MMonakhov/Documents/ChatAI/EtfPortfolio/portfolio-app/src/app/api/cron/sync/route.ts)
 * Clean incoming sync requests and EOD loop queries using `cleanYahooTicker`.
-* Update `backfillQuotes` to attempt a direct HTTP fetch of Yahoo's CSV download URL if the official Yahoo Finance library request throws an exception, parsing CSV and upserting records.
+* Update `backfillQuotes` to attempt a direct HTTP fetch of Yahoo's CSV download URL if the official Yahoo Finance library request throws an exception, parsing CSV and upserting records. Compares prices/volumes inside the target range and filters out duplicates before performing database upsert.
 
 ---
 
