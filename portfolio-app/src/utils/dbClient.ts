@@ -393,14 +393,77 @@ export async function getImportLogs(): Promise<DBImportLog[]> {
   return data || [];
 }
 
+export interface DBUser {
+  id: string;
+  email: string;
+  telegram_chat_id: string | null;
+  risk_free_rate: number;
+  is_admin: boolean;
+  is_locked: boolean;
+  theme: 'dark' | 'light';
+  font_size: 'sm' | 'base' | 'lg' | 'xl';
+  created_at?: string;
+}
+
+export async function adminGetUsers(): Promise<DBUser[]> {
+  if (isDemoMode) {
+    const list = localStorage.getItem('aurawealth_demo_users');
+    return list ? JSON.parse(list) : [];
+  }
+
+  if (!supabase) return [];
+  const { data, error } = await supabase.rpc('get_all_users');
+  if (error) throw error;
+  return data || [];
+}
+
+export async function adminUpdateUser(
+  userId: string,
+  isAdmin: boolean,
+  isLocked: boolean
+): Promise<void> {
+  if (isDemoMode) {
+    const list = localStorage.getItem('aurawealth_demo_users');
+    const users = list ? JSON.parse(list) : [];
+    const idx = users.findIndex((u: any) => u.id === userId);
+    if (idx !== -1) {
+      users[idx].is_admin = isAdmin;
+      users[idx].is_locked = isLocked;
+      localStorage.setItem('aurawealth_demo_users', JSON.stringify(users));
+      return;
+    }
+    throw new Error('User not found in Demo Mode.');
+  }
+
+  if (!supabase) throw new Error('Supabase client not initialized.');
+  const { error } = await supabase.rpc('admin_update_user', {
+    target_user_id: userId,
+    new_is_admin: isAdmin,
+    new_is_locked: isLocked
+  });
+  if (error) throw error;
+}
+
 export async function getUserProfile(userId: string) {
   if (isDemoMode) {
-    return {
-      id: userId,
-      email: 'demo@aurawealth.io',
-      telegram_chat_id: '123456789',
-      risk_free_rate: 0.04
-    };
+    const list = localStorage.getItem('aurawealth_demo_users');
+    const users = list ? JSON.parse(list) : [];
+    let profile = users.find((u: any) => u.id === userId);
+    if (!profile) {
+      profile = {
+        id: userId,
+        email: 'demo@aurawealth.io',
+        telegram_chat_id: '123456789',
+        risk_free_rate: 0.04,
+        is_admin: false,
+        is_locked: false,
+        theme: 'dark',
+        font_size: 'base'
+      };
+      users.push(profile);
+      localStorage.setItem('aurawealth_demo_users', JSON.stringify(users));
+    }
+    return profile;
   }
 
   if (!supabase) return null;
@@ -428,6 +491,14 @@ export async function getUserProfile(userId: string) {
 
 export async function updateUserProfile(userId: string, updates: { telegram_chat_id?: string; risk_free_rate?: number }) {
   if (isDemoMode) {
+    const list = localStorage.getItem('aurawealth_demo_users');
+    const users = list ? JSON.parse(list) : [];
+    const idx = users.findIndex((u: any) => u.id === userId);
+    if (idx !== -1) {
+      users[idx] = { ...users[idx], ...updates };
+      localStorage.setItem('aurawealth_demo_users', JSON.stringify(users));
+      return users[idx];
+    }
     return {
       id: userId,
       email: 'demo@aurawealth.io',

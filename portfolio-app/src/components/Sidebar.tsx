@@ -16,7 +16,8 @@ import {
   X,
   Plus,
   HelpCircle,
-  TrendingUp
+  TrendingUp,
+  Shield
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -28,6 +29,8 @@ interface SidebarProps {
   telegramChatId: string;
   riskFreeRate: number;
   onUpdateSettings: (telegramChatId: string, riskFreeRate: number) => Promise<void>;
+  currentView: 'dashboard' | 'admin';
+  onViewChange: (view: 'dashboard' | 'admin') => void;
 }
 
 export default function Sidebar({
@@ -39,8 +42,10 @@ export default function Sidebar({
   telegramChatId,
   riskFreeRate,
   onUpdateSettings,
+  currentView,
+  onViewChange,
 }: SidebarProps) {
-  const { user, signOut, isDemo } = useAuth();
+  const { user, signOut, isDemo, isAdmin, theme, fontSize, updatePreferences } = useAuth();
   const [showAddForm, setShowAddForm] = useState(false);
   const [newPortName, setNewPortName] = useState('');
   const [newPortBenchmark, setNewPortBenchmark] = useState('SPY');
@@ -87,6 +92,25 @@ export default function Sidebar({
 
       {/* Portfolios List */}
       <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
+        {isAdmin && (
+          <div className="space-y-1">
+            <h2 className="text-xs font-bold text-slate-400 tracking-wider uppercase px-2 mb-2">
+              System Administration
+            </h2>
+            <button
+              onClick={() => onViewChange(currentView === 'admin' ? 'dashboard' : 'admin')}
+              className={`w-full flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
+                currentView === 'admin'
+                  ? 'bg-indigo-500/15 border border-indigo-500/25 text-indigo-300'
+                  : 'bg-slate-900/40 border border-white/5 hover:border-white/10 text-slate-300 hover:text-white'
+              }`}
+            >
+              <Shield size={16} className={currentView === 'admin' ? 'text-indigo-400' : 'text-slate-400'} />
+              {currentView === 'admin' ? 'Back to Dashboard' : 'Admin Control Panel'}
+            </button>
+          </div>
+        )}
+
         <div>
           <div className="flex items-center justify-between px-2 mb-3">
             <h2 className="text-xs font-bold text-slate-400 tracking-wider uppercase">
@@ -264,6 +288,50 @@ export default function Sidebar({
                 <Bell size={12} className="text-indigo-400 animate-bounce" />
                 <span>Alerts sent via Telegram Bot</span>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Preference Settings */}
+        <div className="pt-6 border-t border-white/5">
+          <h2 className="text-xs font-bold text-slate-400 tracking-wider uppercase px-2 mb-3">
+            Appearance Settings
+          </h2>
+          <div className="space-y-4 p-3 bg-slate-900/30 border border-white/5 rounded-xl text-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-slate-400 font-semibold uppercase text-xxs">Theme Mode</span>
+              <div className="flex bg-slate-950 p-0.5 rounded-lg border border-white/10">
+                <button
+                  onClick={() => updatePreferences('dark', fontSize)}
+                  className={`px-3 py-1 text-[10px] font-bold rounded transition ${
+                    theme === 'dark' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  Dark
+                </button>
+                <button
+                  onClick={() => updatePreferences('light', fontSize)}
+                  className={`px-3 py-1 text-[10px] font-bold rounded transition ${
+                    theme === 'light' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  Light
+                </button>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <span className="text-slate-400 font-semibold uppercase text-xxs">Font Scaling</span>
+              <select
+                value={fontSize}
+                onChange={(e) => updatePreferences(theme, e.target.value as any)}
+                className="bg-slate-950 border border-white/10 rounded-lg text-xxs font-semibold text-white px-2 py-1.5 focus:outline-none focus:border-indigo-500"
+              >
+                <option value="sm">Small</option>
+                <option value="base">Normal</option>
+                <option value="lg">Large</option>
+                <option value="xl">Extra Large</option>
+              </select>
             </div>
           </div>
         </div>

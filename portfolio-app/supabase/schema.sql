@@ -4,12 +4,16 @@
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- 1. Users & Settings Table (linked to Supabase Auth.users)
+---- 1. Users & Settings Table (linked to Supabase Auth.users)
 CREATE TABLE IF NOT EXISTS public.users (
   id                UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email             TEXT UNIQUE NOT NULL,
   telegram_chat_id  TEXT,
   risk_free_rate    NUMERIC DEFAULT 0.04,
+  is_admin          BOOLEAN DEFAULT false,
+  is_locked         BOOLEAN DEFAULT false,
+  theme             TEXT CHECK (theme IN ('dark', 'light')) DEFAULT 'dark',
+  font_size         TEXT CHECK (font_size IN ('sm', 'base', 'lg', 'xl')) DEFAULT 'base',
   created_at        TIMESTAMPTZ DEFAULT now()
 );
 
@@ -38,13 +42,19 @@ CREATE TABLE IF NOT EXISTS public.portfolios (
   created_at          TIMESTAMPTZ DEFAULT now()
 );
 
--- Enable RLS for portfolios
+-- Enable RLS for portfolios (block if user is locked)
 ALTER TABLE public.portfolios ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users can manage their own portfolios" 
   ON public.portfolios FOR ALL 
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+  USING (
+    auth.uid() = user_id 
+    AND EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND is_locked = false)
+  )
+  WITH CHECK (
+    auth.uid() = user_id 
+    AND EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND is_locked = false)
+  );
 
 -- 3. Portfolio Assets Table
 CREATE TABLE IF NOT EXISTS public.portfolio_assets (
@@ -56,16 +66,24 @@ CREATE TABLE IF NOT EXISTS public.portfolio_assets (
   UNIQUE (portfolio_id, ticker)
 );
 
--- Enable RLS for portfolio_assets
+-- Enable RLS for portfolio_assets (block if user is locked)
 ALTER TABLE public.portfolio_assets ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users can manage portfolio assets" 
   ON public.portfolio_assets FOR ALL 
   USING (
-    portfolio_id IN (SELECT id FROM public.portfolios WHERE user_id = auth.uid())
+    portfolio_id IN (
+      SELECT id FROM public.portfolios 
+      WHERE user_id = auth.uid() 
+      AND EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND is_locked = false)
+    )
   )
   WITH CHECK (
-    portfolio_id IN (SELECT id FROM public.portfolios WHERE user_id = auth.uid())
+    portfolio_id IN (
+      SELECT id FROM public.portfolios 
+      WHERE user_id = auth.uid() 
+      AND EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND is_locked = false)
+    )
   );
 
 -- 4. EOD Quotes Table
@@ -124,9 +142,14 @@ CREATE POLICY "Service role can manage import logs"
 -- 6. Trigger to automatically link auth.users to public.users on signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
+DECLARE
+  is_first_user BOOLEAN;
 BEGIN
-  INSERT INTO public.users (id, email)
-  VALUES (new.id, new.email);
+  -- Designate the first user in public.users as Admin automatically
+  SELECT count(*) = 0 INTO is_first_user FROM public.users;
+  
+  INSERT INTO public.users (id, email, is_admin)
+  VALUES (new.id, new.email, is_first_user);
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
@@ -134,3 +157,52 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE OR REPLACE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- 7. Security Definer RPC functions for Admin actions
+
+-- Fetch all users for Admin
+CREATE OR REPLACE FUNCTION public.get_all_users()
+RETURNS TABLE (
+  id UUID,
+  email TEXT,
+  telegram_chat_id TEXT,
+  risk_free_rate NUMERIC,
+  is_admin BOOLEAN,
+  is_locked BOOLEAN,
+  theme TEXT,
+  font_size TEXT,
+  created_at TIMESTAMPTZ
+) AS $$
+BEGIN
+  -- Verify caller is an administrator
+  IF EXISTS (SELECT 1 FROM public.users WHERE public.users.id = auth.uid() AND public.users.is_admin = true) THEN
+    RETURN QUERY SELECT u.id, u.email, u.telegram_chat_id, u.risk_free_rate, u.is_admin, u.is_locked, u.theme, u.font_size, u.created_at FROM public.users u;
+  ELSE
+    RAISE EXCEPTION 'Access Denied: Only administrators can query user profiles.';
+  END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Update user settings by Admin
+CREATE OR REPLACE FUNCTION public.admin_update_user(
+  target_user_id UUID,
+  new_is_admin BOOLEAN,
+  new_is_locked BOOLEAN
+)
+RETURNS VOID AS $$
+BEGIN
+  -- Verify caller is an administrator
+  IF EXISTS (SELECT 1 FROM public.users WHERE public.users.id = auth.uid() AND public.users.is_admin = true) THEN
+    -- Prevent an admin from locking themselves (failsafe)
+    IF target_user_id = auth.uid() AND new_is_locked = true THEN
+      RAISE EXCEPTION 'Failsafe: You cannot lock your own administrator account.';
+    END IF;
+    
+    UPDATE public.users
+    SET is_admin = new_is_admin, is_locked = new_is_locked
+    WHERE id = target_user_id;
+  ELSE
+    RAISE EXCEPTION 'Access Denied: Only administrators can modify user records.';
+  END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;

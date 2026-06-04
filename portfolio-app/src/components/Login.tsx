@@ -8,7 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { TrendingUp, Key, Mail, Sparkles } from 'lucide-react';
 
 export default function Login() {
-  const { signInWithPassword, signUpWithPassword, signInWithOtp, isDemo } = useAuth();
+  const { signInWithPassword, signUpWithPassword, signInWithOtp, isDemo, lockedError, setLockedError } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSignUp, setIsSignUp] = useState(false);
@@ -21,6 +21,7 @@ export default function Login() {
 
     setLoading(true);
     setMessage(null);
+    setLockedError(null);
 
     try {
       if (isSignUp) {
@@ -41,6 +42,7 @@ export default function Login() {
   const handleDemoSignIn = async () => {
     setLoading(true);
     setMessage(null);
+    setLockedError(null);
     try {
       const { error } = await signInWithOtp('demo@aurawealth.io');
       if (error) throw error;
@@ -69,6 +71,12 @@ export default function Login() {
             Premium Portfolio Modeling & Optimization
           </p>
         </div>
+
+        {lockedError && (
+          <div className="p-4 rounded-xl text-sm mb-6 border bg-red-500/10 border-red-500/20 text-red-400 font-semibold">
+            {lockedError}
+          </div>
+        )}
 
         {message && (
           <div className={`p-4 rounded-xl text-sm mb-6 border ${
@@ -158,9 +166,51 @@ export default function Login() {
         </button>
 
         {isDemo && (
-          <p className="mt-4 text-center text-xs text-amber-500/80">
-            ⚠️ Supabase environment variables not set. Defaulting to Demo Mode.
-          </p>
+          <>
+            <p className="mt-4 text-center text-xs text-amber-500/80">
+              ⚠️ Supabase environment variables not set. Defaulting to Demo Mode.
+            </p>
+            <div className="mt-6 pt-4 border-t border-white/5">
+              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2.5 text-center">
+                Quick-click Demo Credentials
+              </p>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail('admin@aurawealth.io');
+                    setPassword('password');
+                    setLockedError(null);
+                  }}
+                  className="px-2 py-2 rounded bg-slate-900 border border-white/5 hover:border-indigo-500/35 text-[10px] font-semibold text-indigo-400 hover:text-white transition text-center truncate"
+                >
+                  Admin Role
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail('user@aurawealth.io');
+                    setPassword('password');
+                    setLockedError(null);
+                  }}
+                  className="px-2 py-2 rounded bg-slate-900 border border-white/5 hover:border-indigo-500/35 text-[10px] font-semibold text-slate-300 hover:text-white transition text-center truncate"
+                >
+                  Standard User
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEmail('locked@aurawealth.io');
+                    setPassword('password');
+                    setLockedError(null);
+                  }}
+                  className="px-2 py-2 rounded bg-slate-900 border border-white/5 hover:border-red-500/35 text-[10px] font-semibold text-red-400 hover:text-red-300 transition text-center truncate"
+                >
+                  Locked User
+                </button>
+              </div>
+            </div>
+          </>
         )}
       </div>
     </div>

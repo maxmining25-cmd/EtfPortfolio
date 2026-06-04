@@ -9,6 +9,7 @@ import Login from '../components/Login';
 import Sidebar from '../components/Sidebar';
 import Sandbox from '../components/Sandbox';
 import Analytics from '../components/Analytics';
+import AdminPanel from '../components/AdminPanel';
 import { 
   getPortfolios, 
   createPortfolio, 
@@ -39,6 +40,7 @@ import {
 
 function DashboardContent() {
   const { user } = useAuth();
+  const [currentView, setCurrentView] = useState<'dashboard' | 'admin'>('dashboard');
   
   // Data State
   const [portfolios, setPortfolios] = useState<DBPortfolio[]>([]);
@@ -321,11 +323,18 @@ function DashboardContent() {
         telegramChatId={telegramChatId}
         riskFreeRate={riskFreeRate}
         onUpdateSettings={handleUpdateSettings}
+        currentView={currentView}
+        onViewChange={setCurrentView}
       />
 
-      {/* Main dashboard space */}
-      <main className="flex-1 flex flex-col overflow-y-auto p-8 relative">
-        {/* Banner messages */}
+      {/* Main dashboard space or Admin space */}
+      {currentView === 'admin' ? (
+        <div className="flex-1 overflow-hidden">
+          <AdminPanel onBack={() => setCurrentView('dashboard')} />
+        </div>
+      ) : (
+        <main className="flex-1 flex flex-col overflow-y-auto p-8 relative">
+          {/* Banner messages */}
         {errorMessage && (
           <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl flex items-center gap-2 text-sm">
             <AlertTriangle size={18} />
@@ -490,7 +499,8 @@ function DashboardContent() {
             </div>
           </div>
         )}
-      </main>
+        </main>
+      )}
     </div>
   );
 }
@@ -518,7 +528,27 @@ export default function Home() {
 }
 
 function AuthContextConsumer() {
-  const { user, loading } = useAuth();
+  const { user, loading, theme, fontSize } = useAuth();
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (theme === 'light') {
+      document.documentElement.classList.add('light');
+    } else {
+      document.documentElement.classList.remove('light');
+    }
+  }, [theme]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const sizeMap = {
+      sm: '14px',
+      base: '16px',
+      lg: '18px',
+      xl: '20px'
+    };
+    document.documentElement.style.fontSize = sizeMap[fontSize] || '16px';
+  }, [fontSize]);
 
   if (loading) {
     return (
