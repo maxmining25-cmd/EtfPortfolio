@@ -43,6 +43,18 @@ const MOCK_USER_ID = 'demo-user-id-12345';
 function initializeDemoData() {
   if (typeof window === 'undefined') return;
 
+  const quotesKey = 'aurawealth_demo_quotes';
+  if (!localStorage.getItem(quotesKey)) {
+    const initialQuotes: DBQuote[] = [
+      { id: 'q-1', ticker: 'SPY', date: '2026-06-03', adj_close: 520.40, volume: 55000000 },
+      { id: 'q-2', ticker: 'SPY', date: '2026-06-02', adj_close: 518.20, volume: 48000000 },
+      { id: 'q-3', ticker: 'QQQ', date: '2026-06-03', adj_close: 450.50, volume: 38000000 },
+      { id: 'q-4', ticker: 'GLD', date: '2026-06-03', adj_close: 215.10, volume: 8000000 },
+      { id: 'q-5', ticker: 'BTC', date: '2026-06-03', adj_close: 68500.00, volume: 22000000000 }
+    ];
+    localStorage.setItem(quotesKey, JSON.stringify(initialQuotes));
+  }
+
   const key = 'aurawealth_demo_portfolios';
   if (!localStorage.getItem(key)) {
     const defaultPortfolios: DBPortfolio[] = [
@@ -516,4 +528,99 @@ export async function updateUserProfile(userId: string, updates: { telegram_chat
 
   if (error) throw error;
   return data;
+}
+
+export interface DBQuote {
+  id: string;
+  ticker: string;
+  date: string;
+  adj_close: number;
+  volume: number | null;
+}
+
+export async function adminGetQuotes(ticker?: string): Promise<DBQuote[]> {
+  if (isDemoMode) {
+    const list = localStorage.getItem('aurawealth_demo_quotes');
+    const customQuotes = list ? JSON.parse(list) : [];
+    if (ticker) {
+      return customQuotes.filter((q: DBQuote) => q.ticker.toUpperCase() === ticker.toUpperCase());
+    }
+    return customQuotes;
+  }
+
+  if (!supabase) return [];
+  let query = supabase.from('quotes').select('*');
+  if (ticker) {
+    query = query.eq('ticker', ticker.toUpperCase());
+  }
+  const { data, error } = await query.order('date', { ascending: false }).limit(150);
+  if (error) throw error;
+  return data || [];
+}
+
+export async function adminAddQuote(quote: Partial<DBQuote>): Promise<DBQuote> {
+  if (isDemoMode) {
+    const list = localStorage.getItem('aurawealth_demo_quotes');
+    const customQuotes = list ? JSON.parse(list) : [];
+    const newQuote: DBQuote = {
+      id: 'quote-' + Math.random().toString(36).substring(2, 9),
+      ticker: (quote.ticker || 'SPY').toUpperCase(),
+      date: quote.date || new Date().toISOString().split('T')[0],
+      adj_close: Number(quote.adj_close) || 100.0,
+      volume: quote.volume !== undefined && quote.volume !== null ? Number(quote.volume) : null
+    };
+    customQuotes.push(newQuote);
+    localStorage.setItem('aurawealth_demo_quotes', JSON.stringify(customQuotes));
+    return newQuote;
+  }
+
+  if (!supabase) throw new Error('Supabase client not initialized.');
+  const { data, error } = await supabase
+    .from('quotes')
+    .insert([quote])
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function adminUpdateQuote(quoteId: string, updates: Partial<DBQuote>): Promise<DBQuote> {
+  if (isDemoMode) {
+    const list = localStorage.getItem('aurawealth_demo_quotes');
+    const customQuotes = list ? JSON.parse(list) : [];
+    const idx = customQuotes.findIndex((q: DBQuote) => q.id === quoteId);
+    if (idx !== -1) {
+      customQuotes[idx] = { ...customQuotes[idx], ...updates, ticker: customQuotes[idx].ticker, date: customQuotes[idx].date };
+      localStorage.setItem('aurawealth_demo_quotes', JSON.stringify(customQuotes));
+      return customQuotes[idx];
+    }
+    throw new Error('Quote not found.');
+  }
+
+  if (!supabase) throw new Error('Supabase client not initialized.');
+  const { data, error } = await supabase
+    .from('quotes')
+    .update(updates)
+    .eq('id', quoteId)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function adminDeleteQuote(quoteId: string): Promise<void> {
+  if (isDemoMode) {
+    const list = localStorage.getItem('aurawealth_demo_quotes');
+    const customQuotes = list ? JSON.parse(list) : [];
+    const remaining = customQuotes.filter((q: DBQuote) => q.id !== quoteId);
+    localStorage.setItem('aurawealth_demo_quotes', JSON.stringify(remaining));
+    return;
+  }
+
+  if (!supabase) throw new Error('Supabase client not initialized.');
+  const { error } = await supabase
+    .from('quotes')
+    .delete()
+    .eq('id', quoteId);
+  if (error) throw error;
 }

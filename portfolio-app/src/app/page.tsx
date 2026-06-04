@@ -10,6 +10,7 @@ import Sidebar from '../components/Sidebar';
 import Sandbox from '../components/Sandbox';
 import Analytics from '../components/Analytics';
 import AdminPanel from '../components/AdminPanel';
+import CashFlowConfig from '../components/CashFlowConfig';
 import { 
   getPortfolios, 
   createPortfolio, 
@@ -53,6 +54,13 @@ function DashboardContent() {
   const [riskFreeRate, setRiskFreeRate] = useState(0.04);
   const [importLogs, setImportLogs] = useState<DBImportLog[]>([]);
   const [showLogModal, setShowLogModal] = useState(false);
+  
+  // Cash Flow States
+  const [initialAmount, setInitialAmount] = useState<number>(10000);
+  const [cashFlowType, setCashFlowType] = useState<'none' | 'add' | 'remove'>('none');
+  const [cashFlowAmount, setCashFlowAmount] = useState<number>(500);
+  const [cashFlowFrequency, setCashFlowFrequency] = useState<'monthly' | 'quarterly'>('monthly');
+  const [cashFlowInflationAdjusted, setCashFlowInflationAdjusted] = useState<boolean>(true);
   
   // UX State
   const [isCalculating, setIsCalculating] = useState(false);
@@ -159,7 +167,12 @@ function DashboardContent() {
         assets: assetDatas,
         weights: weightsRecord,
         riskFreeRate,
-        benchmarkPrices: benchData
+        benchmarkPrices: benchData,
+        initialAmount,
+        cashFlowType,
+        cashFlowAmount,
+        cashFlowFrequency,
+        cashFlowInflationAdjusted
       });
 
       setBacktestResult(result);
@@ -169,7 +182,7 @@ function DashboardContent() {
     } finally {
       setIsCalculating(false);
     }
-  }, [assets, selectedPortfolio, riskFreeRate]);
+  }, [assets, selectedPortfolio, riskFreeRate, initialAmount, cashFlowType, cashFlowAmount, cashFlowFrequency, cashFlowInflationAdjusted]);
 
   // Trigger simulation whenever assets configuration updates
   useEffect(() => {
@@ -425,16 +438,28 @@ function DashboardContent() {
             </div>
 
             {/* Dashboard workspace grid */}
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
-              {/* Sliders sandbox */}
-              <div className="xl:col-span-1">
-                <Sandbox
-                  assets={assets}
-                  onUpdateAssets={handleUpdateAssets}
-                  onOptimize={handleOptimizeWeights}
-                  isCalculating={isCalculating}
-                />
-              </div>
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+            {/* Left Sandbox Col */}
+            <div className="xl:col-span-1 space-y-8">
+              <Sandbox
+                assets={assets}
+                onUpdateAssets={handleUpdateAssets}
+                onOptimize={handleOptimizeWeights}
+                isCalculating={isCalculating}
+              />
+              <CashFlowConfig
+                initialAmount={initialAmount}
+                onInitialAmountChange={setInitialAmount}
+                cashFlowType={cashFlowType}
+                onCashFlowTypeChange={setCashFlowType}
+                cashFlowAmount={cashFlowAmount}
+                onCashFlowAmountChange={setCashFlowAmount}
+                cashFlowFrequency={cashFlowFrequency}
+                onCashFlowFrequencyChange={setCashFlowFrequency}
+                cashFlowInflationAdjusted={cashFlowInflationAdjusted}
+                onCashFlowInflationAdjustedChange={setCashFlowInflationAdjusted}
+              />
+            </div>
 
               {/* Analytics & charts */}
               <div className="xl:col-span-2">

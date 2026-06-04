@@ -39,6 +39,7 @@ async function handleSync(request: Request) {
   // Parse query params
   const { searchParams } = new URL(request.url);
   const targetTicker = searchParams.get('ticker')?.toUpperCase();
+  const customStartDate = searchParams.get('startDate'); // e.g. 2024-01-01
 
   // If in Demo Mode (no DB connection), mock success response
   if (isDemo) {
@@ -61,13 +62,13 @@ async function handleSync(request: Request) {
     const processedTickers: string[] = [];
     
     // ----------------------------------------------------
-    // Scenario A: Backfill a single ticker from 2001
+    // Scenario A: Backfill a single ticker from custom or default 2001
     // ----------------------------------------------------
     if (targetTicker) {
       const logId = await createImportLog(targetTicker, 'Historical Backfill');
       
       try {
-        const rowsImported = await backfillQuotes(targetTicker, '2001-01-01');
+        const rowsImported = await backfillQuotes(targetTicker, customStartDate || '2001-01-01');
         await updateImportLog(logId, 'success', rowsImported);
         processedTickers.push(targetTicker);
       } catch (err: any) {

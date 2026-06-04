@@ -8,11 +8,54 @@ export interface AssetData {
   prices: number[]; // Adjusted close prices
 }
 
+export const US_INFLATION_TABLE: Record<number, number> = {
+  2000: 172.20,
+  2001: 177.07,
+  2002: 179.88,
+  2003: 183.96,
+  2004: 188.88,
+  2005: 195.29,
+  2006: 201.59,
+  2007: 207.34,
+  2008: 215.30,
+  2009: 214.54,
+  2010: 218.06,
+  2011: 224.94,
+  2012: 229.59,
+  2013: 232.96,
+  2014: 236.74,
+  2015: 237.02,
+  2016: 240.01,
+  2017: 245.12,
+  2018: 251.11,
+  2019: 255.66,
+  2020: 258.81,
+  2021: 270.97,
+  2022: 292.65,
+  2023: 304.70,
+  2024: 313.69,
+  2025: 322.18,
+  2026: 328.82,
+};
+
+export function getCPI(dateStr: string): number {
+  const year = parseInt(dateStr.substring(0, 4));
+  if (isNaN(year)) return 100.0;
+  if (year < 2000) return US_INFLATION_TABLE[2000];
+  if (year > 2026) return US_INFLATION_TABLE[2026];
+  return US_INFLATION_TABLE[year] || 100.0;
+}
+
 export interface BacktestInput {
   assets: AssetData[];
   weights: Record<string, number>; // ticker -> weight (0 to 1)
   riskFreeRate: number; // default: 0.04 (4% annual)
   benchmarkPrices?: { dates: string[]; prices: number[] }; // benchmark ticker (e.g. SPY)
+  initialAmount?: number;
+  cashFlowType?: 'none' | 'add' | 'remove';
+  cashFlowAmount?: number;
+  cashFlowFrequency?: 'monthly' | 'quarterly';
+  cashFlowInflationAdjusted?: boolean;
 }
 
 export interface OptimizationInput {
@@ -471,6 +514,12 @@ function solveMaxDiv(sigma: number[][], vols: number[]): number[] {
 export function runBacktest(input: BacktestInput): BacktestResult {
   const { assets, weights, riskFreeRate, benchmarkPrices } = input;
   
+  const initialAmount = input.initialAmount ?? 10000;
+  const cashFlowType = input.cashFlowType ?? 'none';
+  const cashFlowAmount = input.cashFlowAmount ?? 0;
+  const cashFlowFrequency = input.cashFlowFrequency ?? 'monthly';
+  const cashFlowInflationAdjusted = input.cashFlowInflationAdjusted ?? false;
+  
   // 1. Find common date range across all assets in portfolio
   const commonDates = findCommonDates(assets);
   
@@ -479,8 +528,8 @@ export function runBacktest(input: BacktestInput): BacktestResult {
   }
   
   const numDays = commonDates.length;
-  const normalizedPortfolioValue: number[] = new Array(numDays).fill(10000);
-  const normalizedBenchmarkValue: number[] | undefined = benchmarkPrices ? new Array(numDays).fill(10000) : undefined;
+  const normalizedPortfolioValue: number[] = new Array(numDays).fill(initialAmount);
+  const normalizedBenchmarkValue: number[] | undefined = benchmarkPrices ? new Array(numDays).fill(initialAmount) : undefined;
   
   // Cache prices and daily returns for portfolio and assets
   const returnsMatrix: number[][] = [];
@@ -529,7 +578,40 @@ export function runBacktest(input: BacktestInput): BacktestResult {
       dayReturn += w * assetReturn;
     });
     portfolioDailyReturns.push(dayReturn);
-    normalizedPortfolioValue[t] = normalizedPortfolioValue[t - 1] * (1 + dayReturn);
+    
+    let value = normalizedPortfolioValue[t - 1] * (1 + dayReturn);
+    
+    // Apply periodic cash flows on month transitions
+    const currentMonthStr = commonDates[t].substring(0, 7);
+    const prevMonthStr = commonDates[t - 1].substring(0, 7);
+    if (currentMonthStr !== prevMonthStr) {
+      let triggerCashFlow = false;
+      if (cashFlowFrequency === 'monthly') {
+        triggerCashFlow = true;
+      } else if (cashFlowFrequency === 'quarterly') {
+        const currentMonthNum = commonDates[t].substring(5, 7);
+        if (['01', '04', '07', '10'].includes(currentMonthNum)) {
+          triggerCashFlow = true;
+        }
+      }
+      
+      if (triggerCashFlow && cashFlowType !== 'none') {
+        let cashAmount = cashFlowAmount;
+        if (cashFlowInflationAdjusted) {
+          const startCPI = getCPI(commonDates[0]);
+          const currentCPI = getCPI(commonDates[t]);
+          const factor = startCPI > 0 ? (currentCPI / startCPI) : 1;
+          cashAmount = cashFlowAmount * factor;
+        }
+        
+        if (cashFlowType === 'add') {
+          value += cashAmount;
+        } else if (cashFlowType === 'remove') {
+          value -= cashAmount;
+        }
+      }
+    }
+    normalizedPortfolioValue[t] = Math.max(value, 0);
   }
   
   // Benchmark simulation
@@ -553,7 +635,40 @@ export function runBacktest(input: BacktestInput): BacktestResult {
     benchmarkDailyReturns = getDailyReturns(alignedBenchmarkPrices);
     for (let t = 1; t < numDays; t++) {
       const r = benchmarkDailyReturns[t - 1] || 0;
-      normalizedBenchmarkValue[t] = normalizedBenchmarkValue[t - 1] * (1 + r);
+      let bVal = normalizedBenchmarkValue[t - 1] * (1 + r);
+      
+      // Apply periodic cash flows on benchmark month transitions
+      const currentMonthStr = commonDates[t].substring(0, 7);
+      const prevMonthStr = commonDates[t - 1].substring(0, 7);
+      if (currentMonthStr !== prevMonthStr) {
+        let triggerCashFlow = false;
+        if (cashFlowFrequency === 'monthly') {
+          triggerCashFlow = true;
+        } else if (cashFlowFrequency === 'quarterly') {
+          const currentMonthNum = commonDates[t].substring(5, 7);
+          if (['01', '04', '07', '10'].includes(currentMonthNum)) {
+            triggerCashFlow = true;
+          }
+        }
+        
+        if (triggerCashFlow && cashFlowType !== 'none') {
+          let cashAmount = cashFlowAmount;
+          if (cashFlowInflationAdjusted) {
+            const startCPI = getCPI(commonDates[0]);
+            const currentCPI = getCPI(commonDates[t]);
+            const factor = startCPI > 0 ? (currentCPI / startCPI) : 1;
+            cashAmount = cashFlowAmount * factor;
+          }
+          
+          if (cashFlowType === 'add') {
+            bVal += cashAmount;
+          } else if (cashFlowType === 'remove') {
+            bVal -= cashAmount;
+          }
+        }
+      }
+      
+      normalizedBenchmarkValue[t] = Math.max(bVal, 0);
     }
   }
   
@@ -577,7 +692,17 @@ export function runBacktest(input: BacktestInput): BacktestResult {
   const years = (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25);
   
   // CAGR
-  const cagr = Math.pow(normalizedPortfolioValue[numDays - 1] / normalizedPortfolioValue[0], 1 / Math.max(years, 0.01)) - 1;
+  let cagr = 0;
+  if (cashFlowType === 'none') {
+    cagr = Math.pow(normalizedPortfolioValue[numDays - 1] / normalizedPortfolioValue[0], 1 / Math.max(years, 0.01)) - 1;
+  } else {
+    // Calculate TWRR-based CAGR using investment growth product
+    let growth = 1;
+    for (const r of portfolioDailyReturns) {
+      growth *= (1 + r);
+    }
+    cagr = Math.pow(growth, 1 / Math.max(years, 0.01)) - 1;
+  }
   
   // Daily returns mean & vol
   const avgDailyReturn = portfolioDailyReturns.reduce((s, r) => s + r, 0) / portfolioDailyReturns.length;
