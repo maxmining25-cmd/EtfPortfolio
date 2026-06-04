@@ -37,7 +37,9 @@ import {
   Lock,
   ChevronRight,
   Database,
-  X
+  X,
+  Menu,
+  TrendingUp
 } from 'lucide-react';
 
 function DashboardContent() {
@@ -68,6 +70,7 @@ function DashboardContent() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // 1. Fetch user profile and portfolios on mount
   useEffect(() => {
@@ -330,20 +333,62 @@ function DashboardContent() {
   const lastSyncDate = importLogs.find(l => l.status === 'success')?.finished_at;
 
   return (
-    <div className="flex-1 flex overflow-hidden">
-      {/* Sidebar navigation */}
-      <Sidebar
-        portfolios={portfolios}
-        selectedPortfolioId={selectedPortfolioId}
-        onSelectPortfolio={setSelectedPortfolioId}
-        onCreatePortfolio={handleCreatePortfolio}
-        onDeletePortfolio={handleDeletePortfolio}
-        telegramChatId={telegramChatId}
-        riskFreeRate={riskFreeRate}
-        onUpdateSettings={handleUpdateSettings}
-        currentView={currentView}
-        onViewChange={setCurrentView}
-      />
+    <div className="flex-1 flex overflow-hidden relative">
+      {/* Sidebar navigation for desktop */}
+      <div className="hidden lg:flex lg:w-80 lg:shrink-0 h-full">
+        <Sidebar
+          portfolios={portfolios}
+          selectedPortfolioId={selectedPortfolioId}
+          onSelectPortfolio={setSelectedPortfolioId}
+          onCreatePortfolio={handleCreatePortfolio}
+          onDeletePortfolio={handleDeletePortfolio}
+          telegramChatId={telegramChatId}
+          riskFreeRate={riskFreeRate}
+          onUpdateSettings={handleUpdateSettings}
+          currentView={currentView}
+          onViewChange={setCurrentView}
+        />
+      </div>
+
+      {/* Sidebar navigation drawer for mobile/tablet */}
+      {isSidebarOpen && (
+        <div className="fixed inset-0 z-40 lg:hidden flex">
+          {/* Dimmed background overlay */}
+          <div 
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-300" 
+            onClick={() => setIsSidebarOpen(false)}
+          />
+          {/* Sidebar Drawer container */}
+          <div className="relative flex flex-col w-80 max-w-[85vw] h-full bg-[#0b0f19] border-r border-white/10 z-50 animate-slideRight">
+            <div className="absolute top-4 right-4 z-50">
+              <button 
+                onClick={() => setIsSidebarOpen(false)}
+                className="p-1.5 rounded-lg bg-slate-900 border border-white/10 text-slate-400 hover:text-white transition cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <Sidebar
+              portfolios={portfolios}
+              selectedPortfolioId={selectedPortfolioId}
+              onSelectPortfolio={(id) => {
+                setSelectedPortfolioId(id);
+                setIsSidebarOpen(false);
+              }}
+              onCreatePortfolio={handleCreatePortfolio}
+              onDeletePortfolio={handleDeletePortfolio}
+              telegramChatId={telegramChatId}
+              riskFreeRate={riskFreeRate}
+              onUpdateSettings={handleUpdateSettings}
+              currentView={currentView}
+              onViewChange={(view) => {
+                setCurrentView(view);
+                setIsSidebarOpen(false);
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Main dashboard space or Admin space */}
       {currentView === 'admin' ? (
@@ -351,7 +396,26 @@ function DashboardContent() {
           <AdminPanel onBack={() => setCurrentView('dashboard')} />
         </div>
       ) : (
-        <main className="flex-1 flex flex-col overflow-y-auto p-8 relative">
+        <main className="flex-1 flex flex-col overflow-y-auto p-4 sm:p-8 relative">
+          {/* Mobile Header Bar */}
+          <div className="lg:hidden flex items-center justify-between p-4 mb-6 bg-slate-900/40 border border-white/5 rounded-2xl backdrop-blur-md shrink-0">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setIsSidebarOpen(true)}
+                className="p-2 rounded-xl bg-slate-900 border border-white/10 text-slate-400 hover:text-white transition flex items-center justify-center cursor-pointer"
+              >
+                <Menu size={20} />
+              </button>
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center">
+                  <TrendingUp size={16} />
+                </div>
+                <span className="text-sm font-display font-bold tracking-tight text-white">
+                  AURA<span className="text-indigo-400">WEALTH</span>
+                </span>
+              </div>
+            </div>
+          </div>
           {/* Banner messages */}
         {errorMessage && (
           <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl flex items-center gap-2 text-sm">

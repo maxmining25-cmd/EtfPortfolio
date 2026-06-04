@@ -17,7 +17,9 @@ import {
   adminMassDeleteUsers,
   adminMassDeleteQuotes,
   adminUpsertQuotes,
-  DBQuote
+  DBQuote,
+  getImportLogs,
+  DBImportLog
 } from '../utils/dbClient';
 import { cleanYahooTicker } from '../utils/portfolioMath';
 import { 
@@ -255,6 +257,17 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
   const [syncTicker, setSyncTicker] = useState('');
   const [syncStartDate, setSyncStartDate] = useState('2024-01-01');
   const [syncingTicker, setSyncingTicker] = useState<string | null>(null);
+  const [importLogs, setImportLogs] = useState<DBImportLog[]>([]);
+  const [showLogModal, setShowLogModal] = useState(false);
+
+  const fetchLogs = async () => {
+    try {
+      const logs = await getImportLogs();
+      setImportLogs(logs);
+    } catch (err: any) {
+      console.error('Failed to load sync logs:', err);
+    }
+  };
 
   // CSV File Sync State
   const [uploadTicker, setUploadTicker] = useState('');
@@ -366,7 +379,10 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
       setSuccess(null);
       
       const res = await fetch(`/api/cron/sync?ticker=${encodeURIComponent(tickerClean)}&startDate=${startStr}`, {
-        method: 'POST'
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.NEXT_PUBLIC_CRON_SECRET || 'local-development-token'}`
+        }
       });
       const data = await res.json();
       
@@ -567,6 +583,21 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
             <div>
               <p className="font-semibold mb-0.5">Operation Error</p>
               <p>{error}</p>
+              {error.includes('Unauthorized scheduler request') && (
+                <div className="mt-2 text-xxs text-red-300/80 leading-relaxed border-t border-red-500/10 pt-2">
+                  <span className="font-bold text-red-300 block mb-0.5">Explanation & Recommendation:</span>
+                  This error indicates that the client request lacks the proper authorization secret or it is mismatched with the backend secret.
+                  In production, you must set the <code className="bg-red-950 px-1 py-0.5 rounded text-white font-mono">NEXT_PUBLIC_CRON_SECRET</code> environment variable in your Vercel project settings to match the server's <code className="bg-red-950 px-1 py-0.5 rounded text-white font-mono">CRON_SECRET</code>.
+                  <div className="mt-2">
+                    <button 
+                      onClick={() => { fetchLogs(); setShowLogModal(true); }}
+                      className="text-indigo-400 hover:text-indigo-300 underline font-bold cursor-pointer"
+                    >
+                      Click here to open the EOD Sync Logs
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -627,8 +658,8 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
                   <p className="text-sm font-semibold text-slate-300">No users found</p>
                 </div>
               ) : (
-                <div className="border border-white/10 rounded-2xl overflow-hidden bg-slate-900/30 backdrop-blur-md">
-                  <table className="w-full text-left border-collapse">
+                <div className="border border-white/10 rounded-2xl overflow-x-auto w-full bg-slate-900/30 backdrop-blur-md">
+                  <table className="w-full text-left border-collapse min-w-[700px]">
                     <thead>
                       <tr className="bg-slate-900/80 border-b border-white/10 text-slate-400 text-xxs font-bold uppercase tracking-wider">
                         <th className="py-3.5 px-4 font-semibold w-10">
@@ -770,7 +801,7 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
           /* ======================================================== */
           /* EOD QUOTES TABLE MANAGER VIEW                            */
           /* ======================================================== */
-          <div className="flex-1 flex flex-col lg:flex-row overflow-hidden p-6 gap-6">
+          <div className="flex-1 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden p-6 gap-6">
             
             {/* LEFT SIDEBAR: Yahoo Sync & Popular Tickers */}
             <div className="w-full lg:w-80 flex flex-col gap-6 shrink-0 overflow-y-auto pr-1">
@@ -932,7 +963,7 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
             </div>
 
             {/* RIGHT COLUMN: Search Filter, Manual CRUD Grid Table, Add Quote Form */}
-            <div className="flex-1 flex flex-col overflow-hidden gap-4">
+            <div className="flex flex-col lg:flex-1 lg:overflow-hidden gap-4">
               
               {/* Form 2: Manual Add Quote Row */}
               <form onSubmit={handleAddQuote} className="p-4 bg-slate-900/40 border border-white/5 rounded-2xl flex flex-wrap items-end gap-3.5 shrink-0">
@@ -993,7 +1024,7 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
                 <button
                   type="submit"
                   disabled={addingQuote}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xxs uppercase tracking-wider transition shrink-0"
+                  className="w-full sm:w-auto px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xxs uppercase tracking-wider transition shrink-0"
                 >
                   {addingQuote ? 'Adding...' : 'Add Row'}
                 </button>
@@ -1013,8 +1044,19 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
                     className="w-full bg-slate-900/60 border border-white/10 rounded-xl py-2 pl-9 pr-4 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/60 transition"
                   />
                 </div>
-                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                <div className="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
                   <button
+                    type="button"
+                    onClick={() => {
+                      fetchLogs();
+                      setShowLogModal(true);
+                    }}
+                    className="px-4 py-2 bg-slate-900 border border-white/10 hover:border-indigo-500/30 text-slate-300 hover:text-indigo-400 font-bold rounded-xl text-xxs uppercase tracking-wider transition flex items-center gap-1 shrink-0"
+                  >
+                    View EOD Sync Logs
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => fetchQuotes(quoteSearch || undefined)}
                     className="px-4 py-2 bg-slate-900 border border-white/10 hover:border-white/20 text-slate-300 font-bold rounded-xl text-xxs uppercase tracking-wider transition flex items-center gap-1 shrink-0"
                   >
@@ -1046,7 +1088,7 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
               </div>
 
               {/* Data Table */}
-              <div className="flex-1 overflow-y-auto">
+              <div className="lg:flex-1 lg:overflow-y-auto w-full">
                 {loadingQuotes ? (
                   <div className="flex flex-col items-center justify-center h-48 gap-2">
                     <RefreshCw size={20} className="text-indigo-400 animate-spin" />
@@ -1059,8 +1101,8 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
                     <p className="text-[10px] text-slate-500 mt-0.5">Click 'Load Quotes' or search for a specific ticker above.</p>
                   </div>
                 ) : (
-                  <div className="border border-white/10 rounded-2xl overflow-hidden bg-slate-900/30 backdrop-blur-md">
-                    <table className="w-full text-left border-collapse">
+                  <div className="border border-white/10 rounded-2xl overflow-x-auto w-full bg-slate-900/30 backdrop-blur-md">
+                    <table className="w-full text-left border-collapse min-w-[600px]">
                       <thead>
                         <tr className="bg-slate-900/80 border-b border-white/10 text-slate-400 text-xxs font-bold uppercase tracking-wider">
                           <th className="py-2.5 px-3 font-semibold w-10">
@@ -1178,6 +1220,64 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
 
           </div>
         )}
+
+      {/* Sync logs details modal */}
+      {showLogModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-6 z-50 text-white">
+          <div className="glass-card max-w-2xl w-full p-6 border border-white/10 flex flex-col max-h-[80vh] glow-indigo">
+            <div className="flex items-center justify-between pb-4 border-b border-white/5 mb-4">
+              <h3 className="text-lg font-display font-bold text-white">EOD Sync Logs</h3>
+              <button
+                type="button"
+                onClick={() => setShowLogModal(false)}
+                className="p-1 hover:bg-white/5 rounded-lg text-slate-400 hover:text-white transition cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+              {importLogs.length === 0 ? (
+                <p className="text-slate-500 text-xs italic py-8 text-center">No synchronization logs available.</p>
+              ) : (
+                importLogs.map((log) => (
+                  <div 
+                    key={log.id} 
+                    className={`p-3 rounded-xl border flex items-center justify-between gap-4 text-xs ${
+                      log.status === 'success'
+                        ? 'bg-emerald-500/5 border-emerald-500/10 text-emerald-300'
+                        : log.status === 'error'
+                        ? 'bg-red-500/5 border-red-500/10 text-red-400'
+                        : 'bg-slate-900 border-white/5 text-slate-400'
+                    }`}
+                  >
+                    <div>
+                      <span className="font-bold uppercase text-white block">{log.ticker}</span>
+                      <span className="text-[10px] text-slate-500">
+                        {log.reason || 'Manual Update'} •{' '}
+                        {new Date(log.started_at).toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-semibold block uppercase text-[10px]">
+                        {log.status}
+                      </span>
+                      <span className="text-[9px] text-slate-500">
+                        {log.rows_imported} rows imported
+                      </span>
+                      {log.error_message && (
+                        <span className="text-[9px] text-red-400/80 block mt-0.5 max-w-[250px] truncate" title={log.error_message}>
+                          Error: {log.error_message}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
       </div>
     </div>
   );

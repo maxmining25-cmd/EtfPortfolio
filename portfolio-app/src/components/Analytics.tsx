@@ -216,9 +216,9 @@ export default function Analytics({
   return (
     <div className="space-y-6">
       {/* 1. Statistics Cards Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 min-[380px]:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {/* CAGR */}
-        <div className="glass-card p-4 border border-white/5 flex flex-col justify-between">
+        <div className="glass-card p-3 sm:p-4 border border-white/5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
             <div className="group relative flex items-center gap-1 cursor-help">
               <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-500">CAGR</span>
@@ -237,7 +237,7 @@ export default function Analytics({
         </div>
 
         {/* Max Drawdown */}
-        <div className="glass-card p-4 border border-white/5 flex flex-col justify-between">
+        <div className="glass-card p-3 sm:p-4 border border-white/5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
             <div className="group relative flex items-center gap-1 cursor-help">
               <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-500">Max Drawdown</span>
@@ -258,7 +258,7 @@ export default function Analytics({
         </div>
 
         {/* Sharpe Ratio */}
-        <div className="glass-card p-4 border border-white/5 flex flex-col justify-between">
+        <div className="glass-card p-3 sm:p-4 border border-white/5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
             <div className="group relative flex items-center gap-1 cursor-help">
               <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-500">Sharpe Ratio</span>
@@ -277,7 +277,7 @@ export default function Analytics({
         </div>
 
         {/* Sortino Ratio */}
-        <div className="glass-card p-4 border border-white/5 flex flex-col justify-between">
+        <div className="glass-card p-3 sm:p-4 border border-white/5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
             <div className="group relative flex items-center gap-1 cursor-help">
               <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-500">Sortino Ratio</span>
@@ -296,7 +296,7 @@ export default function Analytics({
         </div>
 
         {/* Extra Statistics Grid Row */}
-        <div className="glass-card p-4 border border-white/5 flex flex-col justify-between">
+        <div className="glass-card p-3 sm:p-4 border border-white/5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
             <div className="group relative flex items-center gap-1 cursor-help">
               <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-500">Calmar Ratio</span>
@@ -312,7 +312,7 @@ export default function Analytics({
           </div>
         </div>
 
-        <div className="glass-card p-4 border border-white/5 flex flex-col justify-between">
+        <div className="glass-card p-3 sm:p-4 border border-white/5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
             <div className="group relative flex items-center gap-1 cursor-help">
               <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-500">Portfolio Beta</span>
@@ -328,7 +328,7 @@ export default function Analytics({
           </div>
         </div>
 
-        <div className="glass-card p-4 border border-white/5 flex flex-col justify-between">
+        <div className="glass-card p-3 sm:p-4 border border-white/5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
             <div className="group relative flex items-center gap-1 cursor-help">
               <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-500">Jensen's Alpha</span>
@@ -346,7 +346,7 @@ export default function Analytics({
           </div>
         </div>
 
-        <div className="glass-card p-4 border border-white/5 flex flex-col justify-between">
+        <div className="glass-card p-3 sm:p-4 border border-white/5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
             <div className="group relative flex items-center gap-1 cursor-help">
               <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-500">Information Ratio</span>
@@ -363,7 +363,7 @@ export default function Analytics({
         </div>
 
         {/* Downside Deviation */}
-        <div className="glass-card p-4 border border-white/5 flex flex-col justify-between">
+        <div className="glass-card p-3 sm:p-4 border border-white/5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
             <div className="group relative flex items-center gap-1 cursor-help">
               <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-500">Downside Vol</span>
@@ -380,7 +380,7 @@ export default function Analytics({
         </div>
 
         {/* Daily 95% VaR */}
-        <div className="glass-card p-4 border border-white/5 flex flex-col justify-between">
+        <div className="glass-card p-3 sm:p-4 border border-white/5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
             <div className="group relative flex items-center gap-1 cursor-help">
               <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-500">Daily 95% VaR</span>
@@ -397,7 +397,7 @@ export default function Analytics({
         </div>
 
         {/* Daily 95% CVaR */}
-        <div className="glass-card p-4 border border-white/5 flex flex-col justify-between">
+        <div className="glass-card p-3 sm:p-4 border border-white/5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
             <div className="group relative flex items-center gap-1 cursor-help">
               <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-500">Daily 95% CVaR</span>
@@ -414,7 +414,7 @@ export default function Analytics({
         </div>
 
         {/* Best / Worst Year */}
-        <div className="glass-card p-4 border border-white/5 flex flex-col justify-between">
+        <div className="glass-card p-3 sm:p-4 border border-white/5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
             <div className="group relative flex items-center gap-1 cursor-help">
               <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-500">Best / Worst Year</span>
@@ -437,6 +437,7 @@ export default function Analytics({
           </div>
         </div>
       </div>
+
 
       {/* 2. Sub-Tab Switcher */}
       <div className="flex bg-slate-900 border border-white/10 rounded-xl p-1 shrink-0 max-w-[280px]">
