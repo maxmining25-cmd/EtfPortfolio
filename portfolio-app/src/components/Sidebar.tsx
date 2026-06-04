@@ -7,13 +7,10 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { DBPortfolio } from '../utils/dbClient';
 import { 
-  FolderPlus, 
   Trash2, 
   LogOut, 
-  Sliders, 
   Bell, 
   Check, 
-  X,
   Plus,
   HelpCircle,
   TrendingUp,
@@ -86,7 +83,7 @@ export default function Sidebar({
           <span className="text-lg font-display font-bold tracking-tight text-white block leading-tight">
             AURA<span className="text-indigo-400">WEALTH</span>
           </span>
-          <span className="text-slate-500 text-xs font-semibold">WORKSPACE</span>
+          <span className="text-slate-400 text-xs font-semibold">WORKSPACE</span>
         </div>
       </div>
 
@@ -99,7 +96,7 @@ export default function Sidebar({
             </h2>
             <button
               onClick={() => onViewChange(currentView === 'admin' ? 'dashboard' : 'admin')}
-              className={`w-full flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
+              className={`w-full flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold transition focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none ${
                 currentView === 'admin'
                   ? 'bg-indigo-500/15 border border-indigo-500/25 text-indigo-300'
                   : 'bg-slate-900/40 border border-white/5 hover:border-white/10 text-slate-300 hover:text-white'
@@ -118,8 +115,9 @@ export default function Sidebar({
             </h2>
             <button
               onClick={() => setShowAddForm(!showAddForm)}
-              className="text-indigo-400 hover:text-indigo-300 transition"
+              className="text-indigo-400 hover:text-indigo-300 transition focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none rounded"
               title="Add Portfolio"
+              aria-label="Add Portfolio"
             >
               <Plus size={18} />
             </button>
@@ -128,38 +126,40 @@ export default function Sidebar({
           {showAddForm && (
             <form onSubmit={handleAddSubmit} className="mb-4 p-3 bg-slate-900/60 border border-white/5 rounded-xl space-y-3">
               <div>
-                <label className="block text-slate-400 text-xxs font-bold uppercase mb-1">Portfolio Name</label>
+                <label htmlFor="new-portfolio-name" className="block text-slate-400 text-xxs font-bold uppercase mb-1">Portfolio Name</label>
                 <input
+                  id="new-portfolio-name"
                   type="text"
                   required
                   value={newPortName}
                   onChange={(e) => setNewPortName(e.target.value)}
                   placeholder="e.g. All-Weather"
-                  className="w-full bg-slate-950 border border-white/10 rounded-lg py-1.5 px-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-slate-950 border border-white/10 rounded-lg py-1.5 px-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 focus-visible:ring-offset-slate-950"
                 />
               </div>
               <div>
-                <label className="block text-slate-400 text-xxs font-bold uppercase mb-1">Benchmark Ticker</label>
+                <label htmlFor="new-portfolio-benchmark" className="block text-slate-400 text-xxs font-bold uppercase mb-1">Benchmark Ticker</label>
                 <input
+                  id="new-portfolio-benchmark"
                   type="text"
                   required
                   value={newPortBenchmark}
                   onChange={(e) => setNewPortBenchmark(e.target.value.toUpperCase())}
                   placeholder="e.g. SPY"
-                  className="w-full bg-slate-950 border border-white/10 rounded-lg py-1.5 px-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-slate-950 border border-white/10 rounded-lg py-1.5 px-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 focus-visible:ring-offset-slate-950"
                 />
               </div>
               <div className="flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setShowAddForm(false)}
-                  className="px-2.5 py-1 text-xxs bg-slate-800 text-slate-300 rounded hover:bg-slate-700 transition"
+                  className="px-2.5 py-1 text-xxs bg-slate-800 text-slate-300 rounded hover:bg-slate-700 transition focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-2.5 py-1 text-xxs bg-indigo-600 text-white rounded hover:bg-indigo-500 transition"
+                  className="px-2.5 py-1 text-xxs bg-indigo-600 text-white rounded hover:bg-indigo-500 transition focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none"
                 >
                   Create
                 </button>
@@ -169,19 +169,27 @@ export default function Sidebar({
 
           <div className="space-y-1">
             {portfolios.length === 0 ? (
-              <p className="text-slate-500 text-xs px-2 italic">No portfolios saved yet.</p>
+              <p className="text-slate-400 text-xs px-2 italic">No portfolios saved yet.</p>
             ) : (
               portfolios.map((portfolio) => {
                 const isActive = portfolio.id === selectedPortfolioId;
                 return (
                   <div
                     key={portfolio.id}
-                    className={`group flex items-center justify-between rounded-xl px-3 py-2.5 text-sm cursor-pointer transition ${
+                    tabIndex={0}
+                    role="button"
+                    className={`group flex items-center justify-between rounded-xl px-3 py-2.5 text-sm cursor-pointer transition focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none ${
                       isActive
                         ? 'bg-indigo-500/10 border border-indigo-500/25 text-white'
                         : 'border border-transparent text-slate-400 hover:bg-slate-900/40 hover:text-slate-200'
                     }`}
                     onClick={() => onSelectPortfolio(portfolio.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onSelectPortfolio(portfolio.id);
+                      }
+                    }}
                   >
                     <span className="font-medium truncate max-w-[170px]">
                       {portfolio.name}
@@ -197,8 +205,9 @@ export default function Sidebar({
                             onDeletePortfolio(portfolio.id);
                           }
                         }}
-                        className="text-red-500 hover:text-red-400 p-0.5"
+                        className="text-red-500 hover:text-red-400 p-0.5 focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none rounded"
                         title="Delete Portfolio"
+                        aria-label={`Delete portfolio ${portfolio.name}`}
                       >
                         <Trash2 size={13} />
                       </button>
@@ -224,7 +233,7 @@ export default function Sidebar({
                   setEditingSettings(true);
                 }
               }}
-              className="text-indigo-400 hover:text-indigo-300 transition text-xxs font-bold"
+              className="text-indigo-400 hover:text-indigo-300 transition text-xxs font-bold focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none rounded px-1"
             >
               {editingSettings ? (
                 <div className="flex items-center gap-0.5">
@@ -239,9 +248,9 @@ export default function Sidebar({
           <div className="space-y-4 p-3 bg-slate-900/30 border border-white/5 rounded-xl">
             <div>
               <div className="flex justify-between items-center mb-1">
-                <label className="text-slate-400 text-xxs font-bold uppercase flex items-center gap-1">
+                <label htmlFor="settings-risk-free-rate" className="text-slate-400 text-xxs font-bold uppercase flex items-center gap-1">
                   Risk-Free Rate
-                  <span className="text-slate-600" title="Used for Sharpe and Sortino ratio calculations">
+                  <span className="text-slate-400" title="Used for Sharpe and Sortino ratio calculations">
                     <HelpCircle size={10} />
                   </span>
                 </label>
@@ -249,15 +258,16 @@ export default function Sidebar({
               {editingSettings ? (
                 <div className="relative">
                   <input
+                    id="settings-risk-free-rate"
                     type="number"
                     step="0.1"
                     min="0"
                     max="50"
                     value={localRfRate}
                     onChange={(e) => setLocalRfRate(e.target.value)}
-                    className="w-full bg-slate-950 border border-white/10 rounded-lg py-1.5 px-3 text-xs text-white focus:outline-none focus:border-indigo-500"
+                    className="w-full bg-slate-950 border border-white/10 rounded-lg py-1.5 px-3 text-xs text-white focus:outline-none focus:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 focus-visible:ring-offset-slate-950"
                   />
-                  <span className="absolute right-3 inset-y-0 flex items-center text-xs text-slate-500">%</span>
+                  <span className="absolute right-3 inset-y-0 flex items-center text-xs text-slate-400">%</span>
                 </div>
               ) : (
                 <p className="text-sm font-medium text-white">{(riskFreeRate * 100).toFixed(1)}%</p>
@@ -265,26 +275,27 @@ export default function Sidebar({
             </div>
 
             <div>
-              <label className="text-slate-400 text-xxs font-bold uppercase mb-1 block">
+              <label htmlFor="settings-telegram-chat-id" className="text-slate-400 text-xxs font-bold uppercase mb-1 block">
                 Telegram Chat ID
               </label>
               {editingSettings ? (
                 <input
+                  id="settings-telegram-chat-id"
                   type="text"
                   value={localChatId}
                   onChange={(e) => setLocalChatId(e.target.value)}
                   placeholder="e.g. 18273645"
-                  className="w-full bg-slate-950 border border-white/10 rounded-lg py-1.5 px-3 text-xs text-white focus:outline-none focus:border-indigo-500"
+                  className="w-full bg-slate-950 border border-white/10 rounded-lg py-1.5 px-3 text-xs text-white focus:outline-none focus:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 focus-visible:ring-offset-slate-950"
                 />
               ) : (
                 <p className="text-sm font-medium text-white truncate">
-                  {telegramChatId ? telegramChatId : <span className="text-slate-600 italic">Not set</span>}
+                  {telegramChatId ? telegramChatId : <span className="text-slate-400 italic">Not set</span>}
                 </p>
               )}
             </div>
             
             <div className="pt-2 border-t border-white/5">
-              <div className="flex items-center gap-2 text-xxs text-slate-500">
+              <div className="flex items-center gap-2 text-xxs text-slate-400">
                 <Bell size={12} className="text-indigo-400 animate-bounce" />
                 <span>Alerts sent via Telegram Bot</span>
               </div>
@@ -303,7 +314,7 @@ export default function Sidebar({
               <div className="flex bg-slate-950 p-0.5 rounded-lg border border-white/10">
                 <button
                   onClick={() => updatePreferences('dark', fontSize)}
-                  className={`px-3 py-1 text-[10px] font-bold rounded transition ${
+                  className={`px-3 py-1 text-[10px] font-bold rounded transition focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none ${
                     theme === 'dark' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
@@ -311,7 +322,7 @@ export default function Sidebar({
                 </button>
                 <button
                   onClick={() => updatePreferences('light', fontSize)}
-                  className={`px-3 py-1 text-[10px] font-bold rounded transition ${
+                  className={`px-3 py-1 text-[10px] font-bold rounded transition focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none ${
                     theme === 'light' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
@@ -321,11 +332,12 @@ export default function Sidebar({
             </div>
             
             <div className="flex items-center justify-between">
-              <span className="text-slate-400 font-semibold uppercase text-xxs">Font Scaling</span>
+              <label htmlFor="settings-font-scaling" className="text-slate-400 font-semibold uppercase text-xxs cursor-pointer">Font Scaling</label>
               <select
+                id="settings-font-scaling"
                 value={fontSize}
                 onChange={(e) => updatePreferences(theme, e.target.value as any)}
-                className="bg-slate-950 border border-white/10 rounded-lg text-xxs font-semibold text-white px-2 py-1.5 focus:outline-none focus:border-indigo-500"
+                className="bg-slate-950 border border-white/10 rounded-lg text-xxs font-semibold text-white px-2 py-1.5 focus:outline-none focus:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 focus-visible:ring-offset-slate-950"
               >
                 <option value="sm">Small</option>
                 <option value="base">Normal</option>
@@ -343,7 +355,7 @@ export default function Sidebar({
           <span className="text-xs font-semibold text-white block truncate">
             {user?.email}
           </span>
-          <span className="text-slate-500 text-xxs font-bold uppercase flex items-center gap-1">
+          <span className="text-slate-400 text-xxs font-bold uppercase flex items-center gap-1">
             {isDemo ? (
               <span className="text-amber-500">Demo Account</span>
             ) : (
@@ -353,8 +365,9 @@ export default function Sidebar({
         </div>
         <button
           onClick={signOut}
-          className="p-2 bg-slate-900 border border-white/5 hover:bg-red-500/10 hover:border-red-500/20 hover:text-red-400 rounded-xl text-slate-400 transition"
+          className="p-2 bg-slate-900 border border-white/5 hover:bg-red-500/10 hover:border-red-500/20 hover:text-red-400 rounded-xl text-slate-400 transition focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none"
           title="Sign Out"
+          aria-label="Sign Out"
         >
           <LogOut size={16} />
         </button>

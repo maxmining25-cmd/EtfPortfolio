@@ -132,7 +132,7 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-medium py-3 rounded-xl transition shadow-lg shadow-indigo-500/25 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none"
+            className="w-full bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white font-medium py-3 rounded-xl transition shadow-lg shadow-indigo-500/25 active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none"
           >
             {loading ? 'Processing...' : isSignUp ? 'Create Premium Account' : 'Sign In'}
           </button>
@@ -141,7 +141,7 @@ export default function Login() {
         <div className="mt-6 text-center text-sm text-slate-400">
           <button
             onClick={() => setIsSignUp(!isSignUp)}
-            className="hover:text-indigo-400 transition underline decoration-indigo-500/50 underline-offset-4"
+            className="hover:text-indigo-400 transition underline decoration-indigo-500/50 underline-offset-4 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none rounded"
           >
             {isSignUp ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
           </button>
@@ -152,14 +152,14 @@ export default function Login() {
             <div className="w-full border-t border-white/5"></div>
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-[#151b2c] px-3 text-slate-500">Or continue with</span>
+            <span className="bg-[#151b2c] px-3 text-slate-400 font-semibold">Or continue with</span>
           </div>
         </div>
 
         <button
           onClick={handleDemoSignIn}
           disabled={loading}
-          className="w-full bg-slate-950/30 border border-white/10 hover:border-indigo-500/50 hover:bg-slate-950/50 text-indigo-300 font-medium py-3 rounded-xl transition flex items-center justify-center gap-2"
+          className="w-full bg-slate-950/30 border border-white/10 hover:border-indigo-500/50 hover:bg-slate-950/50 text-indigo-300 font-medium py-3 rounded-xl transition flex items-center justify-center gap-2 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none"
         >
           <Sparkles size={16} className="animate-pulse" />
           Explore in Demo Mode
@@ -171,7 +171,7 @@ export default function Login() {
               ⚠️ Supabase environment variables not set. Defaulting to Demo Mode.
             </p>
             <div className="mt-6 pt-4 border-t border-white/5">
-              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2.5 text-center">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2.5 text-center">
                 Quick-click Demo Credentials
               </p>
               <div className="grid grid-cols-3 gap-2">
@@ -182,7 +182,7 @@ export default function Login() {
                     setPassword('password');
                     setLockedError(null);
                   }}
-                  className="px-2 py-2 rounded bg-slate-900 border border-white/5 hover:border-indigo-500/35 text-[10px] font-semibold text-indigo-400 hover:text-white transition text-center truncate"
+                  className="px-2 py-2 rounded bg-slate-900 border border-white/5 hover:border-indigo-500/35 text-[10px] font-semibold text-indigo-400 hover:text-white transition text-center truncate focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none"
                 >
                   Admin Role
                 </button>
@@ -193,7 +193,7 @@ export default function Login() {
                     setPassword('password');
                     setLockedError(null);
                   }}
-                  className="px-2 py-2 rounded bg-slate-900 border border-white/5 hover:border-indigo-500/35 text-[10px] font-semibold text-slate-300 hover:text-white transition text-center truncate"
+                  className="px-2 py-2 rounded bg-slate-900 border border-white/5 hover:border-indigo-500/35 text-[10px] font-semibold text-slate-300 hover:text-white transition text-center truncate focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none"
                 >
                   Standard User
                 </button>
@@ -204,7 +204,7 @@ export default function Login() {
                     setPassword('password');
                     setLockedError(null);
                   }}
-                  className="px-2 py-2 rounded bg-slate-900 border border-white/5 hover:border-red-500/35 text-[10px] font-semibold text-red-400 hover:text-red-300 transition text-center truncate"
+                  className="px-2 py-2 rounded bg-slate-900 border border-white/5 hover:border-red-500/35 text-[10px] font-semibold text-red-400 hover:text-red-300 transition text-center truncate focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none"
                 >
                   Locked User
                 </button>

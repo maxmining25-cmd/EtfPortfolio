@@ -198,9 +198,9 @@ export default function Analytics({
   if (!backtestData) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-8 bg-slate-950/20 border border-white/5 rounded-2xl">
-        <Activity className="text-slate-600 animate-pulse mb-3" size={48} />
+        <Activity className="text-slate-400 animate-pulse mb-3" size={48} />
         <h3 className="text-lg font-display font-bold text-slate-300">Awaiting Simulation</h3>
-        <p className="text-slate-500 text-xs text-center max-w-sm mt-1">
+        <p className="text-slate-400 text-xs text-center max-w-sm mt-1">
           Add assets to your sandbox and model weights to generate performance backtests.
         </p>
       </div>
@@ -220,9 +220,9 @@ export default function Analytics({
         {/* CAGR */}
         <div className="glass-card p-3 sm:p-4 border border-white/5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
-            <div className="group relative flex items-center gap-1 cursor-help">
-              <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-500">CAGR</span>
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-52 p-2 bg-slate-900 border border-white/10 rounded-lg text-[10px] text-slate-300 shadow-xl leading-relaxed z-50 pointer-events-none text-left font-normal normal-case">
+            <div tabIndex={0} className="group relative flex items-center gap-1 cursor-help focus:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 rounded px-1">
+              <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-400">CAGR</span>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block group-focus:block w-52 p-2 bg-slate-900 border border-white/10 rounded-lg text-[10px] text-slate-300 shadow-xl leading-relaxed z-50 pointer-events-none text-left font-normal normal-case">
                 <strong>Compound Annual Growth Rate:</strong> The smoothed annual rate at which an investment grows, assuming profits are compounded annually.
               </div>
             </div>
@@ -232,16 +232,16 @@ export default function Analytics({
             <span className="text-2xl font-bold font-display text-white">
               {fmtPct(metrics.cagr)}
             </span>
-            <span className="block text-[10px] text-slate-500 mt-1">Compound Annual Growth</span>
+            <span className="block text-[10px] text-slate-400 mt-1">Compound Annual Growth</span>
           </div>
         </div>
 
         {/* Max Drawdown */}
         <div className="glass-card p-3 sm:p-4 border border-white/5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
-            <div className="group relative flex items-center gap-1 cursor-help">
-              <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-500">Max Drawdown</span>
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-52 p-2 bg-slate-900 border border-white/10 rounded-lg text-[10px] text-slate-300 shadow-xl leading-relaxed z-50 pointer-events-none text-left font-normal normal-case">
+            <div tabIndex={0} className="group relative flex items-center gap-1 cursor-help focus:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 rounded px-1">
+              <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-400">Max Drawdown</span>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block group-focus:block w-52 p-2 bg-slate-900 border border-white/10 rounded-lg text-[10px] text-slate-300 shadow-xl leading-relaxed z-50 pointer-events-none text-left font-normal normal-case">
                 <strong>Max Drawdown:</strong> The largest peak-to-trough drop in portfolio value before a new peak is reached, indicating historical downside risk.
               </div>
             </div>
@@ -251,7 +251,7 @@ export default function Analytics({
             <span className="text-2xl font-bold font-display text-red-400">
               -{fmtPct(metrics.maxDrawdown)}
             </span>
-            <span className="block text-[10px] text-slate-500 mt-1">
+            <span className="block text-[10px] text-slate-400 mt-1">
               Duration: {metrics.maxDrawdownDuration} days
             </span>
           </div>
@@ -260,9 +260,9 @@ export default function Analytics({
         {/* Sharpe Ratio */}
         <div className="glass-card p-3 sm:p-4 border border-white/5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
-            <div className="group relative flex items-center gap-1 cursor-help">
-              <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-500">Sharpe Ratio</span>
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-52 p-2 bg-slate-900 border border-white/10 rounded-lg text-[10px] text-slate-300 shadow-xl leading-relaxed z-50 pointer-events-none text-left font-normal normal-case">
+            <div tabIndex={0} className="group relative flex items-center gap-1 cursor-help focus:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 rounded px-1">
+              <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-400">Sharpe Ratio</span>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block group-focus:block w-52 p-2 bg-slate-900 border border-white/10 rounded-lg text-[10px] text-slate-300 shadow-xl leading-relaxed z-50 pointer-events-none text-left font-normal normal-case">
                 <strong>Sharpe Ratio:</strong> Measures excess return per unit of total risk (volatility). Higher values indicate better risk-adjusted returns (uses UI risk-free rate, default 4%).
               </div>
             </div>
@@ -272,16 +272,16 @@ export default function Analytics({
             <span className="text-2xl font-bold font-display text-white">
               {fmtNum(metrics.sharpeRatio)}
             </span>
-            <span className="block text-[10px] text-slate-500 mt-1">Risk-Adjusted Return</span>
+            <span className="block text-[10px] text-slate-400 mt-1">Risk-Adjusted Return</span>
           </div>
         </div>
 
         {/* Sortino Ratio */}
         <div className="glass-card p-3 sm:p-4 border border-white/5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
-            <div className="group relative flex items-center gap-1 cursor-help">
-              <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-500">Sortino Ratio</span>
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-52 p-2 bg-slate-900 border border-white/10 rounded-lg text-[10px] text-slate-300 shadow-xl leading-relaxed z-50 pointer-events-none text-left font-normal normal-case">
+            <div tabIndex={0} className="group relative flex items-center gap-1 cursor-help focus:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 rounded px-1">
+              <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-400">Sortino Ratio</span>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block group-focus:block w-52 p-2 bg-slate-900 border border-white/10 rounded-lg text-[10px] text-slate-300 shadow-xl leading-relaxed z-50 pointer-events-none text-left font-normal normal-case">
                 <strong>Sortino Ratio:</strong> Measures excess return per unit of downside deviation. Unlike Sharpe, it only penalizes harmful negative return volatility.
               </div>
             </div>
@@ -291,16 +291,16 @@ export default function Analytics({
             <span className="text-2xl font-bold font-display text-white">
               {fmtNum(metrics.sortinoRatio)}
             </span>
-            <span className="block text-[10px] text-slate-500 mt-1">Downside Deviation adjusted</span>
+            <span className="block text-[10px] text-slate-400 mt-1">Downside Deviation adjusted</span>
           </div>
         </div>
 
         {/* Extra Statistics Grid Row */}
         <div className="glass-card p-3 sm:p-4 border border-white/5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
-            <div className="group relative flex items-center gap-1 cursor-help">
-              <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-500">Calmar Ratio</span>
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-52 p-2 bg-slate-900 border border-white/10 rounded-lg text-[10px] text-slate-300 shadow-xl leading-relaxed z-50 pointer-events-none text-left font-normal normal-case">
+            <div tabIndex={0} className="group relative flex items-center gap-1 cursor-help focus:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 rounded px-1">
+              <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-400">Calmar Ratio</span>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block group-focus:block w-52 p-2 bg-slate-900 border border-white/10 rounded-lg text-[10px] text-slate-300 shadow-xl leading-relaxed z-50 pointer-events-none text-left font-normal normal-case">
                 <strong>Calmar Ratio:</strong> The ratio of CAGR to Max Drawdown over the backtest period. Measures return reward relative to maximum historical drawdown risk.
               </div>
             </div>
@@ -308,15 +308,15 @@ export default function Analytics({
           </div>
           <div>
             <span className="text-lg font-bold text-white">{fmtNum(metrics.calmarRatio)}</span>
-            <span className="block text-[9px] text-slate-500 mt-0.5">Return-to-drawdown</span>
+            <span className="block text-[9px] text-slate-400 mt-0.5">Return-to-drawdown</span>
           </div>
         </div>
 
         <div className="glass-card p-3 sm:p-4 border border-white/5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
-            <div className="group relative flex items-center gap-1 cursor-help">
-              <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-500">Portfolio Beta</span>
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-52 p-2 bg-slate-900 border border-white/10 rounded-lg text-[10px] text-slate-300 shadow-xl leading-relaxed z-50 pointer-events-none text-left font-normal normal-case">
+            <div tabIndex={0} className="group relative flex items-center gap-1 cursor-help focus:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 rounded px-1">
+              <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-400">Portfolio Beta</span>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block group-focus:block w-52 p-2 bg-slate-900 border border-white/10 rounded-lg text-[10px] text-slate-300 shadow-xl leading-relaxed z-50 pointer-events-none text-left font-normal normal-case">
                 <strong>Portfolio Beta:</strong> Measures systematic risk relative to the benchmark ({benchmarkTicker}). A Beta of 1.0 matches benchmark volatility; &gt;1.0 is more sensitive, &lt;1.0 is less.
               </div>
             </div>
@@ -324,16 +324,16 @@ export default function Analytics({
           </div>
           <div>
             <span className="text-lg font-bold text-white">{fmtNum(metrics.beta)}</span>
-            <span className="block text-[9px] text-slate-500 mt-0.5">Vs Benchmark {benchmarkTicker}</span>
+            <span className="block text-[9px] text-slate-400 mt-0.5">Vs Benchmark {benchmarkTicker}</span>
           </div>
         </div>
 
         <div className="glass-card p-3 sm:p-4 border border-white/5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
-            <div className="group relative flex items-center gap-1 cursor-help">
-              <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-500">Jensen's Alpha</span>
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-52 p-2 bg-slate-900 border border-white/10 rounded-lg text-[10px] text-slate-300 shadow-xl leading-relaxed z-50 pointer-events-none text-left font-normal normal-case">
-                <strong>Jensen's Alpha:</strong> The annualized excess return earned by the portfolio relative to the benchmark, adjusting for systematic risk (Beta). Positive alpha indicates outperformance.
+            <div tabIndex={0} className="group relative flex items-center gap-1 cursor-help focus:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 rounded px-1">
+              <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-400">Jensen&apos;s Alpha</span>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block group-focus:block w-52 p-2 bg-slate-900 border border-white/10 rounded-lg text-[10px] text-slate-300 shadow-xl leading-relaxed z-50 pointer-events-none text-left font-normal normal-case">
+                <strong>Jensen&apos;s Alpha:</strong> The annualized excess return earned by the portfolio relative to the benchmark, adjusting for systematic risk (Beta). Positive alpha indicates outperformance.
               </div>
             </div>
             <TrendingUp size={14} className="text-slate-400" />
@@ -342,15 +342,15 @@ export default function Analytics({
             <span className="text-lg font-bold text-emerald-400">
               {metrics.alpha >= 0 ? '+' : ''}{fmtPct(metrics.alpha)}
             </span>
-            <span className="block text-[9px] text-slate-500 mt-0.5">Excess Annual Return</span>
+            <span className="block text-[9px] text-slate-400 mt-0.5">Excess Annual Return</span>
           </div>
         </div>
 
         <div className="glass-card p-3 sm:p-4 border border-white/5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
-            <div className="group relative flex items-center gap-1 cursor-help">
-              <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-500">Information Ratio</span>
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-52 p-2 bg-slate-900 border border-white/10 rounded-lg text-[10px] text-slate-300 shadow-xl leading-relaxed z-50 pointer-events-none text-left font-normal normal-case">
+            <div tabIndex={0} className="group relative flex items-center gap-1 cursor-help focus:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 rounded px-1">
+              <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-400">Information Ratio</span>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block group-focus:block w-52 p-2 bg-slate-900 border border-white/10 rounded-lg text-[10px] text-slate-300 shadow-xl leading-relaxed z-50 pointer-events-none text-left font-normal normal-case">
                 <strong>Information Ratio:</strong> Measures active return over the benchmark divided by Tracking Error (volatility of excess returns). Shows how consistently the portfolio beats the benchmark.
               </div>
             </div>
@@ -358,16 +358,16 @@ export default function Analytics({
           </div>
           <div>
             <span className="text-lg font-bold text-white">{fmtNum(metrics.informationRatio)}</span>
-            <span className="block text-[9px] text-slate-500 mt-0.5">Replication consistency</span>
+            <span className="block text-[9px] text-slate-400 mt-0.5">Replication consistency</span>
           </div>
         </div>
 
         {/* Downside Deviation */}
         <div className="glass-card p-3 sm:p-4 border border-white/5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
-            <div className="group relative flex items-center gap-1 cursor-help">
-              <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-500">Downside Vol</span>
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-52 p-2 bg-slate-900 border border-white/10 rounded-lg text-[10px] text-slate-300 shadow-xl leading-relaxed z-50 pointer-events-none text-left font-normal normal-case">
+            <div tabIndex={0} className="group relative flex items-center gap-1 cursor-help focus:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 rounded px-1">
+              <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-400">Downside Vol</span>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block group-focus:block w-52 p-2 bg-slate-900 border border-white/10 rounded-lg text-[10px] text-slate-300 shadow-xl leading-relaxed z-50 pointer-events-none text-left font-normal normal-case">
                 <strong>Downside Deviation:</strong> Annualized standard deviation of only negative asset returns. Measures bad volatility, ignoring positive swings.
               </div>
             </div>
@@ -375,16 +375,16 @@ export default function Analytics({
           </div>
           <div>
             <span className="text-lg font-bold text-white">{fmtPct(metrics.downsideDeviation)}</span>
-            <span className="block text-[9px] text-slate-500 mt-0.5">Annualized downside risk</span>
+            <span className="block text-[9px] text-slate-400 mt-0.5">Annualized downside risk</span>
           </div>
         </div>
 
         {/* Daily 95% VaR */}
         <div className="glass-card p-3 sm:p-4 border border-white/5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
-            <div className="group relative flex items-center gap-1 cursor-help">
-              <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-500">Daily 95% VaR</span>
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-52 p-2 bg-slate-900 border border-white/10 rounded-lg text-[10px] text-slate-300 shadow-xl leading-relaxed z-50 pointer-events-none text-left font-normal normal-case">
+            <div tabIndex={0} className="group relative flex items-center gap-1 cursor-help focus:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 rounded px-1">
+              <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-400">Daily 95% VaR</span>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block group-focus:block w-52 p-2 bg-slate-900 border border-white/10 rounded-lg text-[10px] text-slate-300 shadow-xl leading-relaxed z-50 pointer-events-none text-left font-normal normal-case">
                 <strong>Value at Risk (VaR):</strong> The maximum expected daily loss at a 95% confidence level under normal conditions. There is a 5% chance of a daily loss exceeding this value.
               </div>
             </div>
@@ -392,16 +392,16 @@ export default function Analytics({
           </div>
           <div>
             <span className="text-lg font-bold text-white">{fmtPct(metrics.var95)}</span>
-            <span className="block text-[9px] text-slate-500 mt-0.5">Expected daily loss (95% CI)</span>
+            <span className="block text-[9px] text-slate-400 mt-0.5">Expected daily loss (95% CI)</span>
           </div>
         </div>
 
         {/* Daily 95% CVaR */}
         <div className="glass-card p-3 sm:p-4 border border-white/5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
-            <div className="group relative flex items-center gap-1 cursor-help">
-              <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-500">Daily 95% CVaR</span>
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-52 p-2 bg-slate-900 border border-white/10 rounded-lg text-[10px] text-slate-300 shadow-xl leading-relaxed z-50 pointer-events-none text-left font-normal normal-case">
+            <div tabIndex={0} className="group relative flex items-center gap-1 cursor-help focus:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 rounded px-1">
+              <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-400">Daily 95% CVaR</span>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block group-focus:block w-52 p-2 bg-slate-900 border border-white/10 rounded-lg text-[10px] text-slate-300 shadow-xl leading-relaxed z-50 pointer-events-none text-left font-normal normal-case">
                 <strong>Conditional Value at Risk (CVaR):</strong> Also called Expected Shortfall. The average expected loss on days when the portfolio loss breaches the 95% VaR threshold.
               </div>
             </div>
@@ -409,16 +409,16 @@ export default function Analytics({
           </div>
           <div>
             <span className="text-lg font-bold text-white">{fmtPct(metrics.cvar95)}</span>
-            <span className="block text-[9px] text-slate-500 mt-0.5">Expected tail loss (ES)</span>
+            <span className="block text-[9px] text-slate-400 mt-0.5">Expected tail loss (ES)</span>
           </div>
         </div>
 
         {/* Best / Worst Year */}
         <div className="glass-card p-3 sm:p-4 border border-white/5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
-            <div className="group relative flex items-center gap-1 cursor-help">
-              <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-500">Best / Worst Year</span>
-              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-52 p-2 bg-slate-900 border border-white/10 rounded-lg text-[10px] text-slate-300 shadow-xl leading-relaxed z-50 pointer-events-none text-left font-normal normal-case">
+            <div tabIndex={0} className="group relative flex items-center gap-1 cursor-help focus:outline-none focus-visible:ring-1 focus-visible:ring-indigo-500 rounded px-1">
+              <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-400">Best / Worst Year</span>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block group-focus:block w-52 p-2 bg-slate-900 border border-white/10 rounded-lg text-[10px] text-slate-300 shadow-xl leading-relaxed z-50 pointer-events-none text-left font-normal normal-case">
                 <strong>Best/Worst Calendar Year:</strong> The highest and lowest total returns generated by the portfolio during any single full calendar year (January–December).
               </div>
             </div>
@@ -427,12 +427,12 @@ export default function Analytics({
           <div className="flex items-center gap-3">
             <div>
               <span className="text-sm font-bold text-emerald-400 block">{fmtPct(metrics.bestYear)}</span>
-              <span className="text-[8px] text-slate-500 uppercase block font-semibold">Best</span>
+              <span className="text-[8px] text-slate-400 uppercase block font-semibold">Best</span>
             </div>
             <div className="border-l border-white/10 h-6" />
             <div>
               <span className="text-sm font-bold text-red-400 block">{fmtPct(metrics.worstYear)}</span>
-              <span className="text-[8px] text-slate-500 uppercase block font-semibold">Worst</span>
+              <span className="text-[8px] text-slate-400 uppercase block font-semibold">Worst</span>
             </div>
           </div>
         </div>
@@ -443,17 +443,19 @@ export default function Analytics({
       <div className="flex bg-slate-900 border border-white/10 rounded-xl p-1 shrink-0 max-w-[280px]">
         <button
           onClick={() => setActiveSubTab('charts')}
-          className={`flex-1 py-1.5 rounded-lg text-[10px] uppercase font-extrabold tracking-wider text-center transition ${
+          className={`flex-1 py-1.5 rounded-lg text-[10px] uppercase font-extrabold tracking-wider text-center transition focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none ${
             activeSubTab === 'charts' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
           }`}
+          aria-label="Switch to Performance Charts tab"
         >
           Performance Charts
         </button>
         <button
           onClick={() => setActiveSubTab('frontier')}
-          className={`flex-1 py-1.5 rounded-lg text-[10px] uppercase font-extrabold tracking-wider text-center transition ${
+          className={`flex-1 py-1.5 rounded-lg text-[10px] uppercase font-extrabold tracking-wider text-center transition focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none ${
             activeSubTab === 'frontier' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
           }`}
+          aria-label="Switch to Efficient Frontier tab"
         >
           Efficient Frontier
         </button>
@@ -467,26 +469,28 @@ export default function Analytics({
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-lg font-display font-bold text-white">Historical Performance</h3>
-                <p className="text-slate-500 text-xxs mt-0.5">Simulated growth of $10,000 portfolio vs benchmark</p>
+                <p className="text-slate-400 text-xxs mt-0.5">Simulated growth of $10,000 portfolio vs benchmark</p>
               </div>
-              <div className="bg-slate-950/60 p-0.5 rounded-lg border border-white/5 flex gap-1">
+              <div className="bg-slate-950/60 p-0.5 rounded-lg border border-white/5 flex gap-1 animate-fadeIn">
                 <button
                   onClick={() => setScaleType('linear')}
-                  className={`px-2.5 py-1 text-xxs font-bold rounded-md transition ${
+                  className={`px-2.5 py-1 text-xxs font-bold rounded-md transition focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none ${
                     scaleType === 'linear'
                       ? 'bg-indigo-600 text-white shadow'
                       : 'text-slate-400 hover:text-white'
                   }`}
+                  aria-label="Set chart scale to Linear"
                 >
                   Linear
                 </button>
                 <button
                   onClick={() => setScaleType('log')}
-                  className={`px-2.5 py-1 text-xxs font-bold rounded-md transition ${
+                  className={`px-2.5 py-1 text-xxs font-bold rounded-md transition focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none ${
                     scaleType === 'log'
                       ? 'bg-indigo-600 text-white shadow'
                       : 'text-slate-400 hover:text-white'
                   }`}
+                  aria-label="Set chart scale to Logarithmic"
                 >
                   Log
                 </button>
@@ -494,9 +498,12 @@ export default function Analytics({
             </div>
 
             {/* Equity Chart */}
-            <div className="h-72 w-full">
+            <div className="h-72 w-full relative">
+              <div className="sr-only" id="equity-chart-description">
+                Line chart displaying the simulated portfolio balance value growth in dollars compared to the benchmark equity curve.
+              </div>
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                <LineChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }} aria-describedby="equity-chart-description">
                   <XAxis dataKey="date" stroke="#475569" fontSize={10} tickLine={false} />
                   <YAxis
                     scale={scaleType === 'log' ? 'log' : 'auto'}
@@ -540,9 +547,12 @@ export default function Analytics({
               <span className="text-xxs font-bold uppercase tracking-wider text-slate-400 px-2 block">
                 Drawdown Analysis (%)
               </span>
-              <div className="h-28 w-full">
+              <div className="h-28 w-full relative">
+                <div className="sr-only" id="drawdown-chart-description">
+                  Area chart showing maximum drops from historical peak values in percentage levels for the portfolio over time.
+                </div>
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData} margin={{ top: 0, right: 10, left: 10, bottom: 0 }}>
+                  <AreaChart data={chartData} margin={{ top: 0, right: 10, left: 10, bottom: 0 }} aria-describedby="drawdown-chart-description">
                     <XAxis dataKey="date" hide />
                     <YAxis
                       stroke="#475569"
@@ -586,8 +596,11 @@ export default function Analytics({
                 Sector Concentration
               </h3>
               <div className="h-48 w-full flex items-center justify-center relative">
+                <div className="sr-only" id="allocation-donut-description">
+                  Donut concentration chart displaying percentage weight distribution among sectors or asset types.
+                </div>
                 <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
+                  <PieChart aria-describedby="allocation-donut-description">
                     <Pie
                       data={pieData}
                       cx="50%"
@@ -605,7 +618,7 @@ export default function Analytics({
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute text-center">
-                  <span className="text-[10px] text-slate-500 uppercase font-bold tracking-widest block">
+                  <span className="text-[10px] text-slate-400 uppercase font-bold tracking-widest block">
                     Allocation
                   </span>
                   <span className="text-lg font-bold text-white leading-none">
@@ -639,14 +652,17 @@ export default function Analytics({
           <div className="lg:col-span-2 glass-card p-6 border border-white/5 space-y-6">
             <div>
               <h3 className="text-lg font-display font-bold text-white">Efficient Frontier Model</h3>
-              <p className="text-slate-500 text-xxs mt-0.5">
+              <p className="text-slate-400 text-xxs mt-0.5">
                 Expected annual return vs annualized historical volatility
               </p>
             </div>
             
-            <div className="h-[360px] w-full">
+            <div className="h-[360px] w-full relative">
+              <div className="sr-only" id="frontier-scatter-description">
+                Scatter chart displaying the Efficient Frontier curve line, plotting individual standalone asset coordinates, and the current portfolio risk/reward dot.
+              </div>
               <ResponsiveContainer width="100%" height="100%">
-                <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 10 }}>
+                <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 10 }} aria-describedby="frontier-scatter-description">
                   <XAxis 
                     type="number" 
                     dataKey="x" 
@@ -720,7 +736,7 @@ export default function Analytics({
               </h4>
               <div className="space-y-3">
                 {/* Current Portfolio Stats in breakdown */}
-                <div className="p-3 bg-slate-900/60 rounded-xl border border-white/5">
+                <div className="p-3 bg-slate-900/60 rounded-xl border border-white/5 animate-fadeIn">
                   <span className="text-[10px] text-amber-400 font-bold uppercase tracking-widest block mb-1">
                     Current Portfolio
                   </span>
@@ -739,7 +755,7 @@ export default function Analytics({
                   <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block">
                     Individual Standalone Assets
                   </span>
-                  <div className="max-h-[160px] overflow-y-auto space-y-1.5 pr-1">
+                  <div className="max-h-[160px] overflow-y-auto space-y-1.5 pr-1 scrollbar-thin">
                     {assetsData.map(asset => (
                       <div key={asset.ticker} className="flex items-center justify-between text-xxs p-2 bg-slate-950/40 rounded-lg border border-white/5">
                         <span className="font-bold text-white uppercase">{asset.ticker}</span>
@@ -757,7 +773,7 @@ export default function Analytics({
 
             {/* Explanation box */}
             <div className="p-4 bg-indigo-950/20 border border-indigo-500/10 rounded-2xl text-xxs text-slate-400 leading-relaxed space-y-2">
-              <span className="font-bold text-indigo-300 block uppercase tracking-wider">
+              <span className="font-bold text-indigo-300 block uppercase tracking-wider animate-pulse">
                 Diversification & Efficient Frontier
               </span>
               <p>

@@ -3,7 +3,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { DBAsset } from '../utils/dbClient';
 import { cleanYahooTicker } from '../utils/portfolioMath';
 import { 
@@ -216,20 +216,22 @@ export default function Sandbox({
         <div className="flex items-center gap-2">
           <button
             onClick={() => setAutoNormalize(!autoNormalize)}
-            className={`px-3 py-1 text-xs rounded-lg border transition flex items-center gap-1.5 ${
+            className={`px-3 py-1 text-xs rounded-lg border transition flex items-center gap-1.5 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none ${
               autoNormalize
                 ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-300'
                 : 'bg-slate-900 border-white/10 text-slate-400'
             }`}
             title="Automatically scale other weights when adjusting sliders"
+            aria-label="Toggle Auto-Scale weights on sliders"
           >
             <Scale size={13} />
             Auto-Scale
           </button>
           <button
             onClick={handleReset}
-            className="p-1 text-slate-400 hover:text-white transition"
+            className="p-1 text-slate-400 hover:text-white transition focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none rounded"
             title="Reset Weights"
+            aria-label="Reset portfolio weights to equal"
           >
             <RotateCcw size={16} />
           </button>
@@ -248,60 +250,60 @@ export default function Sandbox({
           <button
             onClick={() => onOptimize('equal')}
             disabled={isCalculating || assets.length === 0}
-            className="group relative px-3 py-2 text-xxs font-bold uppercase bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 hover:bg-slate-900 text-slate-300 rounded-xl transition disabled:opacity-30"
+            className="group relative px-3 py-2 text-xxs font-bold uppercase bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 hover:bg-slate-900 text-slate-300 rounded-xl transition disabled:opacity-30 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none"
           >
             Equal Weight
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-48 p-2 bg-slate-900 border border-white/10 rounded-lg text-[9px] text-slate-300 normal-case shadow-xl leading-relaxed z-50 pointer-events-none text-left">
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block group-focus:block w-48 p-2 bg-slate-900 border border-white/10 rounded-lg text-[9px] text-slate-300 normal-case shadow-xl leading-relaxed z-50 pointer-events-none text-left">
               <strong>Equal Weight (1/N):</strong> Allocates an equal percentage of weight to all assets in the portfolio.
             </div>
           </button>
           <button
             onClick={() => onOptimize('sharpe')}
             disabled={isCalculating || assets.length === 0}
-            className="group relative px-3 py-2 text-xxs font-bold uppercase bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 hover:bg-slate-900 text-slate-300 rounded-xl transition disabled:opacity-30"
+            className="group relative px-3 py-2 text-xxs font-bold uppercase bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 hover:bg-slate-900 text-slate-300 rounded-xl transition disabled:opacity-30 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none"
           >
             Max Sharpe (Markowitz)
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-48 p-2 bg-slate-900 border border-white/10 rounded-lg text-[9px] text-slate-300 normal-case shadow-xl leading-relaxed z-50 pointer-events-none text-left">
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block group-focus:block w-48 p-2 bg-slate-900 border border-white/10 rounded-lg text-[9px] text-slate-300 normal-case shadow-xl leading-relaxed z-50 pointer-events-none text-left">
               <strong>Max Sharpe:</strong> Optimizes weights to maximize expected excess return per unit of volatility (tangency portfolio).
             </div>
           </button>
           <button
             onClick={() => onOptimize('min_vol')}
             disabled={isCalculating || assets.length === 0}
-            className="group relative px-3 py-2 text-xxs font-bold uppercase bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 hover:bg-slate-900 text-slate-300 rounded-xl transition disabled:opacity-30"
+            className="group relative px-3 py-2 text-xxs font-bold uppercase bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 hover:bg-slate-900 text-slate-300 rounded-xl transition disabled:opacity-30 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none"
           >
             Min Volatility (GMV)
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-48 p-2 bg-slate-900 border border-white/10 rounded-lg text-[9px] text-slate-300 normal-case shadow-xl leading-relaxed z-50 pointer-events-none text-left">
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block group-focus:block w-48 p-2 bg-slate-900 border border-white/10 rounded-lg text-[9px] text-slate-300 normal-case shadow-xl leading-relaxed z-50 pointer-events-none text-left">
               <strong>Min Volatility (GMV):</strong> Optimizes weights to produce the lowest overall portfolio return volatility.
             </div>
           </button>
           <button
             onClick={() => onOptimize('risk_parity')}
             disabled={isCalculating || assets.length === 0}
-            className="group relative px-3 py-2 text-xxs font-bold uppercase bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 hover:bg-slate-900 text-slate-300 rounded-xl transition disabled:opacity-30"
+            className="group relative px-3 py-2 text-xxs font-bold uppercase bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 hover:bg-slate-900 text-slate-300 rounded-xl transition disabled:opacity-30 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none"
           >
             Risk Parity (ERC)
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-48 p-2 bg-slate-900 border border-white/10 rounded-lg text-[9px] text-slate-300 normal-case shadow-xl leading-relaxed z-50 pointer-events-none text-left">
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block group-focus:block w-48 p-2 bg-slate-900 border border-white/10 rounded-lg text-[9px] text-slate-300 normal-case shadow-xl leading-relaxed z-50 pointer-events-none text-left">
               <strong>Risk Parity (ERC):</strong> Allocates weights so that each asset contributes equally to the total portfolio risk.
             </div>
           </button>
           <button
             onClick={() => onOptimize('max_div')}
             disabled={isCalculating || assets.length === 0}
-            className="group relative px-3 py-2 text-xxs font-bold uppercase bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 hover:bg-slate-900 text-slate-300 rounded-xl transition disabled:opacity-30"
+            className="group relative px-3 py-2 text-xxs font-bold uppercase bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 hover:bg-slate-900 text-slate-300 rounded-xl transition disabled:opacity-30 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none"
           >
             Max Diversification
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-48 p-2 bg-slate-900 border border-white/10 rounded-lg text-[9px] text-slate-300 normal-case shadow-xl leading-relaxed z-50 pointer-events-none text-left">
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block group-focus:block w-48 p-2 bg-slate-900 border border-white/10 rounded-lg text-[9px] text-slate-300 normal-case shadow-xl leading-relaxed z-50 pointer-events-none text-left">
               <strong>Max Diversification:</strong> Optimizes weights to maximize the portfolio diversification ratio (weighted average volatility / portfolio volatility).
             </div>
           </button>
           <button
             onClick={() => onOptimize('sortino')}
             disabled={isCalculating || assets.length === 0}
-            className="group relative px-3 py-2 text-xxs font-bold uppercase bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 hover:bg-slate-900 text-slate-300 rounded-xl transition disabled:opacity-30"
+            className="group relative px-3 py-2 text-xxs font-bold uppercase bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 hover:bg-slate-900 text-slate-300 rounded-xl transition disabled:opacity-30 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none"
           >
             Max Sortino
-            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-48 p-2 bg-slate-900 border border-white/10 rounded-lg text-[9px] text-slate-300 normal-case shadow-xl leading-relaxed z-50 pointer-events-none text-left">
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block group-focus:block w-48 p-2 bg-slate-900 border border-white/10 rounded-lg text-[9px] text-slate-300 normal-case shadow-xl leading-relaxed z-50 pointer-events-none text-left">
               <strong>Max Sortino:</strong> Optimizes weights to maximize expected excess return per unit of downside deviation.
             </div>
           </button>
@@ -311,7 +313,7 @@ export default function Sandbox({
       {/* Asset List & Sliders */}
       <div className="space-y-4 max-h-[300px] overflow-y-auto pr-1">
         {assets.length === 0 ? (
-          <p className="text-slate-500 text-sm py-4 text-center italic">
+          <p className="text-slate-400 text-sm py-4 text-center italic">
             Add assets below to begin modeling.
           </p>
         ) : (
@@ -342,18 +344,19 @@ export default function Sandbox({
                     {/* Weight percentage indicator */}
                     <div className="flex items-center text-xs text-white bg-slate-950 px-2 py-0.5 rounded-lg border border-white/5">
                       <span className="font-semibold">{weightPercent}</span>
-                      <Percent size={10} className="text-slate-500 ml-0.5" />
+                      <Percent size={10} className="text-slate-400 ml-0.5" />
                     </div>
 
                     {/* Lock button */}
                     <button
                       onClick={() => toggleLock(asset.ticker)}
-                      className={`p-1.5 rounded-lg border transition ${
+                      className={`p-1.5 rounded-lg border transition focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none ${
                         isLocked 
                           ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400'
-                          : 'bg-slate-900 border-white/5 text-slate-500 hover:text-slate-300'
+                          : 'bg-slate-900 border-white/5 text-slate-400 hover:text-slate-300'
                       }`}
                       title={isLocked ? 'Unlock Asset Weight' : 'Lock Asset Weight'}
+                      aria-label={isLocked ? `Unlock weight for ${asset.ticker}` : `Lock weight for ${asset.ticker}`}
                     >
                       {isLocked ? <Lock size={12} /> : <Unlock size={12} />}
                     </button>
@@ -361,8 +364,9 @@ export default function Sandbox({
                     {/* Delete button */}
                     <button
                       onClick={() => handleRemoveAsset(asset.ticker)}
-                      className="p-1.5 bg-slate-900 border border-white/5 text-slate-500 hover:text-red-400 hover:border-red-500/10 rounded-lg transition"
+                      className="p-1.5 bg-slate-900 border border-white/5 text-slate-400 hover:text-red-400 hover:border-red-500/10 rounded-lg transition focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none"
                       title="Remove Asset"
+                      aria-label={`Remove asset ${asset.ticker}`}
                     >
                       <Trash2 size={12} />
                     </button>
@@ -377,7 +381,8 @@ export default function Sandbox({
                   value={weightPercent}
                   disabled={isLocked}
                   onChange={(e) => handleWeightChange(asset.ticker, parseInt(e.target.value))}
-                  className="w-full h-1 bg-slate-900 rounded-lg appearance-none cursor-pointer accent-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="w-full h-1 bg-slate-900 rounded-lg appearance-none cursor-pointer accent-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-1 focus-visible:ring-offset-slate-950"
+                  aria-label={`Weight for ${asset.ticker}`}
                 />
               </div>
             );
@@ -395,7 +400,7 @@ export default function Sandbox({
           {!isNormalized && (
             <button
               onClick={handleManualNormalize}
-              className="bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-400 font-bold px-2 py-0.5 rounded transition uppercase text-[9px]"
+              className="bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-400 font-bold px-2 py-0.5 rounded transition uppercase text-[9px] focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none"
             >
               Normalize
             </button>
@@ -411,12 +416,14 @@ export default function Sandbox({
           value={newTicker}
           onChange={(e) => setNewTicker(e.target.value)}
           placeholder="Ticker (e.g. GLD, QQQ, BTC)"
-          className="flex-1 bg-slate-950 border border-white/10 rounded-xl py-2 px-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+          className="flex-1 bg-slate-950 border border-white/10 rounded-xl py-2 px-3 text-xs text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+          aria-label="New Asset Ticker"
         />
         <select
           value={newType}
           onChange={(e) => setNewType(e.target.value as any)}
-          className="bg-slate-950 border border-white/10 rounded-xl py-2 px-2 text-xs text-slate-300 focus:outline-none focus:border-indigo-500"
+          className="bg-slate-950 border border-white/10 rounded-xl py-2 px-2 text-xs text-slate-300 focus:outline-none focus:border-indigo-500 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950"
+          aria-label="New Asset Type"
         >
           <option value="etf">ETF</option>
           <option value="crypto">Crypto</option>
@@ -424,7 +431,8 @@ export default function Sandbox({
         </select>
         <button
           type="submit"
-          className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl p-2.5 transition flex items-center justify-center shrink-0 active:scale-[0.96]"
+          className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl p-2.5 transition flex items-center justify-center shrink-0 active:scale-[0.96] focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none"
+          aria-label="Add Asset"
         >
           <Plus size={16} />
         </button>

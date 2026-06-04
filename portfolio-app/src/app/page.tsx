@@ -363,7 +363,8 @@ function DashboardContent() {
             <div className="absolute top-4 right-4 z-50">
               <button 
                 onClick={() => setIsSidebarOpen(false)}
-                className="p-1.5 rounded-lg bg-slate-900 border border-white/10 text-slate-400 hover:text-white transition cursor-pointer"
+                className="p-1.5 rounded-lg bg-slate-900 border border-white/10 text-slate-400 hover:text-white transition cursor-pointer focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none"
+                aria-label="Close navigation menu drawer"
               >
                 <X size={18} />
               </button>
@@ -402,7 +403,8 @@ function DashboardContent() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setIsSidebarOpen(true)}
-                className="p-2 rounded-xl bg-slate-900 border border-white/10 text-slate-400 hover:text-white transition flex items-center justify-center cursor-pointer"
+                className="p-2 rounded-xl bg-slate-900 border border-white/10 text-slate-400 hover:text-white transition flex items-center justify-center cursor-pointer focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none"
+                aria-label="Open navigation menu drawer"
               >
                 <Menu size={20} />
               </button>
@@ -440,7 +442,7 @@ function DashboardContent() {
               <span className="text-xs font-semibold text-slate-300 block">
                 Database EOD Quotes Sync
               </span>
-              <span className="text-[10px] text-slate-500 font-medium">
+              <span className="text-[10px] text-slate-400 font-medium">
                 Last synchronized:{' '}
                 {lastSyncDate ? (
                   new Date(lastSyncDate).toLocaleString()
@@ -453,14 +455,14 @@ function DashboardContent() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowLogModal(true)}
-              className="px-3 py-1.5 text-xxs font-bold text-slate-400 hover:text-white bg-slate-900 border border-white/5 rounded-lg transition"
+              className="px-3 py-1.5 text-xxs font-bold text-slate-400 hover:text-white bg-slate-900 border border-white/5 rounded-lg transition focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none"
             >
               View Sync Logs
             </button>
             <button
               onClick={handleSyncQuotes}
               disabled={isSyncing}
-              className="px-3 py-1.5 text-xxs font-bold text-indigo-300 hover:text-white bg-indigo-600/10 hover:bg-indigo-600/20 border border-indigo-500/20 rounded-lg flex items-center gap-1.5 transition disabled:opacity-40"
+              className="px-3 py-1.5 text-xxs font-bold text-indigo-300 hover:text-white bg-indigo-600/10 hover:bg-indigo-600/20 border border-indigo-500/20 rounded-lg flex items-center gap-1.5 transition disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none"
             >
               <RefreshCw size={12} className={isSyncing ? 'animate-spin' : ''} />
               Sync EOD Quotes
@@ -470,10 +472,10 @@ function DashboardContent() {
 
         {/* Workspace content */}
         {!selectedPortfolioId ? (
-          <div className="flex-1 flex flex-col items-center justify-center p-8 bg-slate-950/20 border border-white/5 rounded-2xl">
-            <Calendar size={48} className="text-slate-600 mb-3" />
+          <div className="flex-1 flex flex-col items-center justify-center p-8 bg-slate-950/20 border border-white/5 rounded-2xl animate-fadeIn">
+            <Calendar size={48} className="text-slate-400 mb-3" />
             <h3 className="text-lg font-display font-bold text-slate-300">No Portfolio Selected</h3>
-            <p className="text-slate-500 text-xs text-center max-w-sm mt-1">
+            <p className="text-slate-400 text-xs text-center max-w-sm mt-1">
               Select an existing portfolio from the sidebar or click the '+' button to bootstrap a new layout.
             </p>
           </div>
@@ -486,12 +488,12 @@ function DashboardContent() {
                   {selectedPortfolio?.name}
                 </h2>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="text-xxs font-bold uppercase text-slate-500">Benchmark:</span>
+                  <span className="text-xxs font-bold uppercase text-slate-400">Benchmark:</span>
                   <span className="text-xxs font-bold text-indigo-400 uppercase bg-indigo-500/10 px-1.5 py-0.5 rounded border border-indigo-500/10">
                     {selectedPortfolio?.benchmark_ticker}
                   </span>
-                  <span className="text-slate-600 text-xxs">•</span>
-                  <span className="text-xxs font-bold uppercase text-slate-500">Rebalance:</span>
+                  <span className="text-slate-400 text-xxs">•</span>
+                  <span className="text-xxs font-bold uppercase text-slate-400">Rebalance:</span>
                   <span className="text-xxs font-bold text-violet-400 uppercase bg-violet-500/10 px-1.5 py-0.5 rounded border border-violet-500/10">
                     {selectedPortfolio?.rebalance_type}
                   </span>
@@ -550,15 +552,16 @@ function DashboardContent() {
                 <h3 className="text-lg font-display font-bold text-white">EOD Sync Logs</h3>
                 <button
                   onClick={() => setShowLogModal(false)}
-                  className="p-1 hover:bg-white/5 rounded-lg text-slate-400 hover:text-white transition"
+                  className="p-1 hover:bg-white/5 rounded-lg text-slate-400 hover:text-white transition focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none"
+                  aria-label="Close logs dialog"
                 >
                   <X size={18} />
                 </button>
               </div>
 
-              <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+              <div className="flex-1 overflow-y-auto space-y-2 pr-1 scrollbar-thin">
                 {importLogs.length === 0 ? (
-                  <p className="text-slate-500 text-xs italic py-8 text-center">No synchronization logs available.</p>
+                  <p className="text-slate-400 text-xs italic py-8 text-center">No synchronization logs available.</p>
                 ) : (
                   importLogs.map((log) => (
                     <div 
@@ -573,7 +576,7 @@ function DashboardContent() {
                     >
                       <div>
                         <span className="font-bold uppercase text-white block">{log.ticker}</span>
-                        <span className="text-[10px] text-slate-500">
+                        <span className="text-[10px] text-slate-400">
                           {log.reason || 'Manual Update'} •{' '}
                           {new Date(log.started_at).toLocaleTimeString()}
                         </span>
@@ -582,7 +585,7 @@ function DashboardContent() {
                         <span className="font-semibold block uppercase text-[10px]">
                           {log.status}
                         </span>
-                        <span className="text-[9px] text-slate-500">
+                        <span className="text-[9px] text-slate-400">
                           {log.rows_imported} rows imported
                         </span>
                       </div>
