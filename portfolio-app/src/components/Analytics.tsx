@@ -18,7 +18,11 @@ import {
   Pie,
   Cell,
   LineChart,
-  Line
+  Line,
+  ScatterChart,
+  Scatter,
+  ZAxis,
+  LabelList
 } from 'recharts';
 import { 
   TrendingUp, 
@@ -43,6 +47,7 @@ export default function Analytics({
   benchmarkTicker
 }: AnalyticsProps) {
   const [scaleType, setScaleType] = useState<'linear' | 'log'>('linear');
+  const [activeSubTab, setActiveSubTab] = useState<'charts' | 'frontier'>('charts');
 
   // 1. Downsample Equity Curve Data to prevent Recharts lag (max 1000 points)
   const chartData = useMemo(() => {
@@ -79,6 +84,33 @@ export default function Analytics({
     }
     
     return formatted;
+  }, [backtestData]);
+
+  // Efficient Frontier Data Memoizers
+  const frontierData = useMemo(() => {
+    if (!backtestData || !backtestData.efficientFrontier) return [];
+    return backtestData.efficientFrontier.map(pt => ({
+      x: parseFloat((pt.volatility * 100).toFixed(2)),
+      y: parseFloat((pt.expectedReturn * 100).toFixed(2))
+    }));
+  }, [backtestData]);
+
+  const assetsData = useMemo(() => {
+    if (!backtestData || !backtestData.individualAssets) return [];
+    return backtestData.individualAssets.map(pt => ({
+      ticker: pt.ticker,
+      x: parseFloat((pt.volatility * 100).toFixed(2)),
+      y: parseFloat((pt.expectedReturn * 100).toFixed(2))
+    }));
+  }, [backtestData]);
+
+  const currentPortfolioPoint = useMemo(() => {
+    if (!backtestData || !backtestData.metrics) return { x: 0, y: 0 };
+    return {
+      ticker: 'Current Portfolio',
+      x: parseFloat((backtestData.metrics.volatility * 100).toFixed(2)),
+      y: parseFloat((backtestData.metrics.cagr * 100).toFixed(2))
+    };
   }, [backtestData]);
 
   // 2. Asset Allocation Data for Donut Chart
@@ -289,180 +321,394 @@ export default function Analytics({
             <span className="block text-[9px] text-slate-500 mt-0.5">Replication consistency</span>
           </div>
         </div>
+
+        {/* Downside Deviation */}
+        <div className="glass-card p-4 border border-white/5 flex flex-col justify-between">
+          <div className="flex items-center justify-between text-slate-400 mb-2">
+            <span className="text-xxs font-bold uppercase tracking-wider">Downside Vol</span>
+            <Layers size={14} className="text-indigo-400" />
+          </div>
+          <div>
+            <span className="text-lg font-bold text-white">{fmtPct(metrics.downsideDeviation)}</span>
+            <span className="block text-[9px] text-slate-500 mt-0.5">Annualized downside risk</span>
+          </div>
+        </div>
+
+        {/* Daily 95% VaR */}
+        <div className="glass-card p-4 border border-white/5 flex flex-col justify-between">
+          <div className="flex items-center justify-between text-slate-400 mb-2">
+            <span className="text-xxs font-bold uppercase tracking-wider">Daily 95% VaR</span>
+            <HelpCircle size={14} className="text-red-400" />
+          </div>
+          <div>
+            <span className="text-lg font-bold text-white">{fmtPct(metrics.var95)}</span>
+            <span className="block text-[9px] text-slate-500 mt-0.5">Expected daily loss (95% CI)</span>
+          </div>
+        </div>
+
+        {/* Daily 95% CVaR */}
+        <div className="glass-card p-4 border border-white/5 flex flex-col justify-between">
+          <div className="flex items-center justify-between text-slate-400 mb-2">
+            <span className="text-xxs font-bold uppercase tracking-wider">Daily 95% CVaR</span>
+            <HelpCircle size={14} className="text-red-400" />
+          </div>
+          <div>
+            <span className="text-lg font-bold text-white">{fmtPct(metrics.cvar95)}</span>
+            <span className="block text-[9px] text-slate-500 mt-0.5">Expected tail loss (ES)</span>
+          </div>
+        </div>
+
+        {/* Best / Worst Year */}
+        <div className="glass-card p-4 border border-white/5 flex flex-col justify-between">
+          <div className="flex items-center justify-between text-slate-400 mb-2">
+            <span className="text-xxs font-bold uppercase tracking-wider">Best / Worst Year</span>
+            <TrendingUp size={14} className="text-emerald-400" />
+          </div>
+          <div className="flex items-center gap-3">
+            <div>
+              <span className="text-sm font-bold text-emerald-400 block">{fmtPct(metrics.bestYear)}</span>
+              <span className="text-[8px] text-slate-500 uppercase block font-semibold">Best</span>
+            </div>
+            <div className="border-l border-white/10 h-6" />
+            <div>
+              <span className="text-sm font-bold text-red-400 block">{fmtPct(metrics.worstYear)}</span>
+              <span className="text-[8px] text-slate-500 uppercase block font-semibold">Worst</span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* 2. Charts Dashboard */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Equity Curve & Drawdown (Left, col-span-2) */}
-        <div className="lg:col-span-2 glass-card p-6 border border-white/5 space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-display font-bold text-white">Historical Performance</h3>
-              <p className="text-slate-500 text-xxs mt-0.5">Simulated growth of $10,000 portfolio vs benchmark</p>
-            </div>
-            <div className="bg-slate-950/60 p-0.5 rounded-lg border border-white/5 flex gap-1">
-              <button
-                onClick={() => setScaleType('linear')}
-                className={`px-2.5 py-1 text-xxs font-bold rounded-md transition ${
-                  scaleType === 'linear'
-                    ? 'bg-indigo-600 text-white shadow'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Linear
-              </button>
-              <button
-                onClick={() => setScaleType('log')}
-                className={`px-2.5 py-1 text-xxs font-bold rounded-md transition ${
-                  scaleType === 'log'
-                    ? 'bg-indigo-600 text-white shadow'
-                    : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                Log
-              </button>
-            </div>
-          </div>
+      {/* 2. Sub-Tab Switcher */}
+      <div className="flex bg-slate-900 border border-white/10 rounded-xl p-1 shrink-0 max-w-[280px]">
+        <button
+          onClick={() => setActiveSubTab('charts')}
+          className={`flex-1 py-1.5 rounded-lg text-[10px] uppercase font-extrabold tracking-wider text-center transition ${
+            activeSubTab === 'charts' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          Performance Charts
+        </button>
+        <button
+          onClick={() => setActiveSubTab('frontier')}
+          className={`flex-1 py-1.5 rounded-lg text-[10px] uppercase font-extrabold tracking-wider text-center transition ${
+            activeSubTab === 'frontier' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          Efficient Frontier
+        </button>
+      </div>
 
-          {/* Equity Chart */}
-          <div className="h-72 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
-                <XAxis dataKey="date" stroke="#475569" fontSize={10} tickLine={false} />
-                <YAxis
-                  scale={scaleType === 'log' ? 'log' : 'auto'}
-                  domain={scaleType === 'log' ? ['auto', 'auto'] : [0, 'auto']}
-                  stroke="#475569"
-                  fontSize={10}
-                  tickLine={false}
-                  tickFormatter={(v) => `$${v.toLocaleString()}`}
-                />
-                <Tooltip
-                  contentStyle={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px' }}
-                  labelStyle={{ color: '#94a3b8', fontSize: 11, fontWeight: 'bold' }}
-                  itemStyle={{ fontSize: 12 }}
-                />
-                <Legend verticalAlign="top" height={36} iconType="circle" />
-                <Line
-                  type="monotone"
-                  dataKey="portfolio"
-                  name="Portfolio"
-                  stroke="#6366f1"
-                  strokeWidth={2.5}
-                  dot={false}
-                />
-                {benchmarkTicker && (
-                  <Line
-                    type="monotone"
-                    dataKey="benchmark"
-                    name={`Benchmark (${benchmarkTicker})`}
-                    stroke="#475569"
-                    strokeWidth={1.5}
-                    strokeDasharray="4 4"
-                    dot={false}
-                  />
-                )}
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+      {activeSubTab === 'charts' ? (
+        /* 2. Charts Dashboard */
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Equity Curve & Drawdown (Left, col-span-2) */}
+          <div className="lg:col-span-2 glass-card p-6 border border-white/5 space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-display font-bold text-white">Historical Performance</h3>
+                <p className="text-slate-500 text-xxs mt-0.5">Simulated growth of $10,000 portfolio vs benchmark</p>
+              </div>
+              <div className="bg-slate-950/60 p-0.5 rounded-lg border border-white/5 flex gap-1">
+                <button
+                  onClick={() => setScaleType('linear')}
+                  className={`px-2.5 py-1 text-xxs font-bold rounded-md transition ${
+                    scaleType === 'linear'
+                      ? 'bg-indigo-600 text-white shadow'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Linear
+                </button>
+                <button
+                  onClick={() => setScaleType('log')}
+                  className={`px-2.5 py-1 text-xxs font-bold rounded-md transition ${
+                    scaleType === 'log'
+                      ? 'bg-indigo-600 text-white shadow'
+                      : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Log
+                </button>
+              </div>
+            </div>
 
-          {/* Drawdowns Area Chart (Synchronized visual height) */}
-          <div className="space-y-2">
-            <span className="text-xxs font-bold uppercase tracking-wider text-slate-400 px-2 block">
-              Drawdown Analysis (%)
-            </span>
-            <div className="h-28 w-full">
+            {/* Equity Chart */}
+            <div className="h-72 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData} margin={{ top: 0, right: 10, left: 10, bottom: 0 }}>
-                  <XAxis dataKey="date" hide />
+                <LineChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                  <XAxis dataKey="date" stroke="#475569" fontSize={10} tickLine={false} />
                   <YAxis
+                    scale={scaleType === 'log' ? 'log' : 'auto'}
+                    domain={scaleType === 'log' ? ['auto', 'auto'] : [0, 'auto']}
                     stroke="#475569"
                     fontSize={10}
                     tickLine={false}
-                    domain={[0, 'auto']}
-                    reversed
-                    tickFormatter={(v) => `-${v}%`}
+                    tickFormatter={(v) => `$${v.toLocaleString()}`}
                   />
                   <Tooltip
                     contentStyle={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px' }}
                     labelStyle={{ color: '#94a3b8', fontSize: 11, fontWeight: 'bold' }}
-                    itemStyle={{ color: '#ef4444', fontSize: 12 }}
+                    itemStyle={{ fontSize: 12 }}
                   />
-                  <Area
+                  <Legend verticalAlign="top" height={36} iconType="circle" />
+                  <Line
                     type="monotone"
-                    dataKey="drawdown"
-                    name="Drawdown"
-                    stroke="#ef4444"
-                    fill="url(#colorDd)"
-                    fillOpacity={0.2}
-                  >
-                    <defs>
-                      <linearGradient id="colorDd" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#ef4444" stopOpacity={0.4}/>
-                        <stop offset="95%" stopColor="#ef4444" stopOpacity={0.0}/>
-                      </linearGradient>
-                    </defs>
-                  </Area>
-                </AreaChart>
+                    dataKey="portfolio"
+                    name="Portfolio"
+                    stroke="#6366f1"
+                    strokeWidth={2.5}
+                    dot={false}
+                  />
+                  {benchmarkTicker && (
+                    <Line
+                      type="monotone"
+                      dataKey="benchmark"
+                      name={`Benchmark (${benchmarkTicker})`}
+                      stroke="#475569"
+                      strokeWidth={1.5}
+                      strokeDasharray="4 4"
+                      dot={false}
+                    />
+                  )}
+                </LineChart>
               </ResponsiveContainer>
             </div>
-          </div>
-        </div>
 
-        {/* Matrix & Asset Allocation breakdowns (Right, col-span-1) */}
-        <div className="space-y-6">
-          {/* Allocation Donut */}
-          <div className="glass-card p-6 border border-white/5">
-            <h3 className="text-sm font-display font-bold text-white uppercase tracking-wider mb-4">
-              Sector Concentration
-            </h3>
-            <div className="h-48 w-full flex items-center justify-center relative">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={55}
-                    outerRadius={75}
-                    paddingAngle={3}
-                    dataKey="value"
-                  >
-                    {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value) => `${value}%`} />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="absolute text-center">
-                <span className="text-[10px] text-slate-500 uppercase font-bold tracking-widest block">
-                  Allocation
-                </span>
-                <span className="text-lg font-bold text-white leading-none">
-                  {assets.length} Assets
-                </span>
+            {/* Drawdowns Area Chart (Synchronized visual height) */}
+            <div className="space-y-2">
+              <span className="text-xxs font-bold uppercase tracking-wider text-slate-400 px-2 block">
+                Drawdown Analysis (%)
+              </span>
+              <div className="h-28 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData} margin={{ top: 0, right: 10, left: 10, bottom: 0 }}>
+                    <XAxis dataKey="date" hide />
+                    <YAxis
+                      stroke="#475569"
+                      fontSize={10}
+                      tickLine={false}
+                      domain={[0, 'auto']}
+                      reversed
+                      tickFormatter={(v) => `-${v}%`}
+                    />
+                    <Tooltip
+                      contentStyle={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px' }}
+                      labelStyle={{ color: '#94a3b8', fontSize: 11, fontWeight: 'bold' }}
+                      itemStyle={{ color: '#ef4444', fontSize: 12 }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="drawdown"
+                      name="Drawdown"
+                      stroke="#ef4444"
+                      fill="url(#colorDd)"
+                      fillOpacity={0.2}
+                    >
+                      <defs>
+                        <linearGradient id="colorDd" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="#ef4444" stopOpacity={0.4}/>
+                          <stop offset="95%" stopColor="#ef4444" stopOpacity={0.0}/>
+                        </linearGradient>
+                      </defs>
+                    </Area>
+                  </AreaChart>
+                </ResponsiveContainer>
               </div>
             </div>
-            {/* Donut Legend */}
-            <div className="mt-4 flex flex-wrap justify-center gap-4">
-              {pieData.map((entry, idx) => (
-                <div key={entry.name} className="flex items-center gap-1.5 text-xxs">
-                  <div 
-                    className="w-2 h-2 rounded-full" 
-                    style={{ backgroundColor: COLORS[idx % COLORS.length] }} 
-                  />
-                  <span className="text-slate-400 uppercase font-semibold">{entry.name}</span>
-                  <span className="text-white font-bold">{entry.value}%</span>
+          </div>
+
+          {/* Matrix & Asset Allocation breakdowns (Right, col-span-1) */}
+          <div className="space-y-6">
+            {/* Allocation Donut */}
+            <div className="glass-card p-6 border border-white/5">
+              <h3 className="text-sm font-display font-bold text-white uppercase tracking-wider mb-4">
+                Sector Concentration
+              </h3>
+              <div className="h-48 w-full flex items-center justify-center relative">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={55}
+                      outerRadius={75}
+                      paddingAngle={3}
+                      dataKey="value"
+                    >
+                      {pieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => `${value}%`} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="absolute text-center">
+                  <span className="text-[10px] text-slate-500 uppercase font-bold tracking-widest block">
+                    Allocation
+                  </span>
+                  <span className="text-lg font-bold text-white leading-none">
+                    {assets.length} Assets
+                  </span>
                 </div>
-              ))}
+              </div>
+              {/* Donut Legend */}
+              <div className="mt-4 flex flex-wrap justify-center gap-4">
+                {pieData.map((entry, idx) => (
+                  <div key={entry.name} className="flex items-center gap-1.5 text-xxs">
+                    <div 
+                      className="w-2 h-2 rounded-full" 
+                      style={{ backgroundColor: COLORS[idx % COLORS.length] }} 
+                    />
+                    <span className="text-slate-400 uppercase font-semibold">{entry.name}</span>
+                    <span className="text-white font-bold">{entry.value}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Heatmap */}
+            {matrixContent}
+          </div>
+        </div>
+      ) : (
+        /* Efficient Frontier View */
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Scatter Chart (Left, col-span-2) */}
+          <div className="lg:col-span-2 glass-card p-6 border border-white/5 space-y-6">
+            <div>
+              <h3 className="text-lg font-display font-bold text-white">Efficient Frontier Model</h3>
+              <p className="text-slate-500 text-xxs mt-0.5">
+                Expected annual return vs annualized historical volatility
+              </p>
+            </div>
+            
+            <div className="h-[360px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 10 }}>
+                  <XAxis 
+                    type="number" 
+                    dataKey="x" 
+                    name="Volatility" 
+                    unit="%" 
+                    stroke="#475569" 
+                    fontSize={10}
+                    tickLine={false}
+                    domain={['auto', 'auto']}
+                  />
+                  <YAxis 
+                    type="number" 
+                    dataKey="y" 
+                    name="Expected Return" 
+                    unit="%" 
+                    stroke="#475569" 
+                    fontSize={10}
+                    tickLine={false}
+                    domain={['auto', 'auto']}
+                  />
+                  <ZAxis type="number" range={[60, 200]} />
+                  <Tooltip 
+                    cursor={{ strokeDasharray: '3 3' }}
+                    contentStyle={{ background: '#1e293b', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px' }}
+                    itemStyle={{ fontSize: 12, color: '#fff' }}
+                    labelStyle={{ display: 'none' }}
+                    formatter={(value, name, props) => {
+                      const ticker = props.payload.ticker;
+                      return [`${value}%`, name + (ticker ? ` (${ticker})` : '')];
+                    }}
+                  />
+                  <Legend verticalAlign="top" height={36} iconType="circle" />
+                  
+                  {/* Efficient Frontier Curve Line */}
+                  <Scatter 
+                    name="Efficient Frontier" 
+                    data={frontierData} 
+                    fill="#6366f1" 
+                    line={{ stroke: '#6366f1', strokeWidth: 2 }}
+                    lineType="joint" 
+                    shape={() => null} 
+                  />
+                  
+                  {/* Individual Assets */}
+                  <Scatter 
+                    name="Standalone Assets" 
+                    data={assetsData} 
+                    fill="#10b981" 
+                    shape="square"
+                  >
+                    <LabelList dataKey="ticker" position="top" stroke="#94a3b8" fontSize={9} offset={5} />
+                  </Scatter>
+                  
+                  {/* Current Portfolio Position */}
+                  <Scatter 
+                    name="Current Portfolio" 
+                    data={[currentPortfolioPoint]} 
+                    fill="#f59e0b" 
+                    shape="circle"
+                  />
+                </ScatterChart>
+              </ResponsiveContainer>
             </div>
           </div>
 
-          {/* Heatmap */}
-          {matrixContent}
+          {/* Explanation sidebar (Right, col-span-1) */}
+          <div className="glass-card p-6 border border-white/5 space-y-6 flex flex-col justify-between">
+            <div className="space-y-4">
+              <h4 className="text-sm font-display font-bold text-white uppercase tracking-wider">
+                Risk & Return Breakdown
+              </h4>
+              <div className="space-y-3">
+                {/* Current Portfolio Stats in breakdown */}
+                <div className="p-3 bg-slate-900/60 rounded-xl border border-white/5">
+                  <span className="text-[10px] text-amber-400 font-bold uppercase tracking-widest block mb-1">
+                    Current Portfolio
+                  </span>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-slate-400">Return (CAGR):</span>
+                    <span className="text-white font-bold">{currentPortfolioPoint.y}%</span>
+                  </div>
+                  <div className="flex justify-between text-xs mt-1">
+                    <span className="text-slate-400">Volatility:</span>
+                    <span className="text-white font-bold">{currentPortfolioPoint.x}%</span>
+                  </div>
+                </div>
+
+                {/* Individual Assets listing */}
+                <div className="space-y-2">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest block">
+                    Individual Standalone Assets
+                  </span>
+                  <div className="max-h-[160px] overflow-y-auto space-y-1.5 pr-1">
+                    {assetsData.map(asset => (
+                      <div key={asset.ticker} className="flex items-center justify-between text-xxs p-2 bg-slate-950/40 rounded-lg border border-white/5">
+                        <span className="font-bold text-white uppercase">{asset.ticker}</span>
+                        <div className="text-right text-slate-400">
+                          <span>Ret: <strong className="text-slate-200">{asset.y}%</strong></span>
+                          <span className="mx-1">•</span>
+                          <span>Vol: <strong className="text-slate-200">{asset.x}%</strong></span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Explanation box */}
+            <div className="p-4 bg-indigo-950/20 border border-indigo-500/10 rounded-2xl text-xxs text-slate-400 leading-relaxed space-y-2">
+              <span className="font-bold text-indigo-300 block uppercase tracking-wider">
+                Diversification & Efficient Frontier
+              </span>
+              <p>
+                The **Efficient Frontier** traces out the mathematically optimal portfolios that offer the highest expected return for a defined level of risk.
+              </p>
+              <p>
+                Notice how the **Current Portfolio (Orange Dot)** is positioned relative to the **Standalone Assets (Green Squares)**. By combining assets with low correlation, portfolio volatility decreases, pushing the orange dot further left towards the frontier curve.
+              </p>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

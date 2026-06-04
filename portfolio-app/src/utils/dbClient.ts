@@ -90,6 +90,61 @@ function initializeDemoData() {
         telegram_enabled: true,
         telegram_send_time: '09:00:00',
         created_at: new Date().toISOString()
+      },
+      {
+        id: 'port-4',
+        user_id: MOCK_USER_ID,
+        name: 'Rick Ferri Core Four',
+        rebalance_type: 'quarterly',
+        deviation_threshold: 5.0,
+        benchmark_ticker: 'SPY',
+        telegram_enabled: false,
+        telegram_send_time: '09:00:00',
+        created_at: new Date().toISOString()
+      },
+      {
+        id: 'port-5',
+        user_id: MOCK_USER_ID,
+        name: 'Bill Bernstein No Brainer',
+        rebalance_type: 'annually',
+        deviation_threshold: 5.0,
+        benchmark_ticker: 'SPY',
+        telegram_enabled: false,
+        telegram_send_time: '09:00:00',
+        created_at: new Date().toISOString()
+      },
+      {
+        id: 'port-6',
+        user_id: MOCK_USER_ID,
+        name: 'Harry Browne Permanent Portfolio',
+        rebalance_type: 'annually',
+        deviation_threshold: 5.0,
+        benchmark_ticker: 'SPY',
+        telegram_enabled: false,
+        telegram_send_time: '09:00:00',
+        created_at: new Date().toISOString()
+      },
+      {
+        id: 'port-7',
+        user_id: MOCK_USER_ID,
+        name: 'David Swensen Yale Endowment',
+        rebalance_type: 'annually',
+        deviation_threshold: 5.0,
+        benchmark_ticker: 'SPY',
+        telegram_enabled: false,
+        telegram_send_time: '09:00:00',
+        created_at: new Date().toISOString()
+      },
+      {
+        id: 'port-8',
+        user_id: MOCK_USER_ID,
+        name: 'Mebane Faber Ivy Portfolio',
+        rebalance_type: 'quarterly',
+        deviation_threshold: 5.0,
+        benchmark_ticker: 'SPY',
+        telegram_enabled: false,
+        telegram_send_time: '09:00:00',
+        created_at: new Date().toISOString()
       }
     ];
 
@@ -106,7 +161,40 @@ function initializeDemoData() {
       // Port 3: QQQ (50%), BTC (30%), ETH (20%)
       { portfolio_id: 'port-3', ticker: 'QQQ', weight: 0.50, asset_type: 'etf' },
       { portfolio_id: 'port-3', ticker: 'BTC', weight: 0.30, asset_type: 'crypto' },
-      { portfolio_id: 'port-3', ticker: 'ETH', weight: 0.20, asset_type: 'crypto' }
+      { portfolio_id: 'port-3', ticker: 'ETH', weight: 0.20, asset_type: 'crypto' },
+
+      // Port 4: VTI (48%), VXUS (24%), VNQ (8%), BND (20%)
+      { portfolio_id: 'port-4', ticker: 'VTI', weight: 0.48, asset_type: 'etf' },
+      { portfolio_id: 'port-4', ticker: 'VXUS', weight: 0.24, asset_type: 'etf' },
+      { portfolio_id: 'port-4', ticker: 'VNQ', weight: 0.08, asset_type: 'etf' },
+      { portfolio_id: 'port-4', ticker: 'BND', weight: 0.20, asset_type: 'etf' },
+
+      // Port 5: SPY (25%), VB (25%), VXUS (25%), SHY (25%)
+      { portfolio_id: 'port-5', ticker: 'SPY', weight: 0.25, asset_type: 'etf' },
+      { portfolio_id: 'port-5', ticker: 'VB', weight: 0.25, asset_type: 'etf' },
+      { portfolio_id: 'port-5', ticker: 'VXUS', weight: 0.25, asset_type: 'etf' },
+      { portfolio_id: 'port-5', ticker: 'SHY', weight: 0.25, asset_type: 'etf' },
+
+      // Port 6: VTI (25%), TLT (25%), BIL (25%), GLD (25%)
+      { portfolio_id: 'port-6', ticker: 'VTI', weight: 0.25, asset_type: 'etf' },
+      { portfolio_id: 'port-6', ticker: 'TLT', weight: 0.25, asset_type: 'etf' },
+      { portfolio_id: 'port-6', ticker: 'BIL', weight: 0.25, asset_type: 'etf' },
+      { portfolio_id: 'port-6', ticker: 'GLD', weight: 0.25, asset_type: 'metal' },
+
+      // Port 7: VTI (30%), EFA (15%), VWO (5%), VNQ (20%), TLT (15%), TIP (15%)
+      { portfolio_id: 'port-7', ticker: 'VTI', weight: 0.30, asset_type: 'etf' },
+      { portfolio_id: 'port-7', ticker: 'EFA', weight: 0.15, asset_type: 'etf' },
+      { portfolio_id: 'port-7', ticker: 'VWO', weight: 0.05, asset_type: 'etf' },
+      { portfolio_id: 'port-7', ticker: 'VNQ', weight: 0.20, asset_type: 'etf' },
+      { portfolio_id: 'port-7', ticker: 'TLT', weight: 0.15, asset_type: 'etf' },
+      { portfolio_id: 'port-7', ticker: 'TIP', weight: 0.15, asset_type: 'etf' },
+
+      // Port 8: VTI (20%), VXUS (20%), BND (20%), VNQ (20%), GSG (20%)
+      { portfolio_id: 'port-8', ticker: 'VTI', weight: 0.20, asset_type: 'etf' },
+      { portfolio_id: 'port-8', ticker: 'VXUS', weight: 0.20, asset_type: 'etf' },
+      { portfolio_id: 'port-8', ticker: 'BND', weight: 0.20, asset_type: 'etf' },
+      { portfolio_id: 'port-8', ticker: 'VNQ', weight: 0.20, asset_type: 'etf' },
+      { portfolio_id: 'port-8', ticker: 'GSG', weight: 0.20, asset_type: 'etf' }
     ];
 
     localStorage.setItem(key, JSON.stringify(defaultPortfolios));
@@ -734,6 +822,80 @@ export async function prepopulateUserPortfolios(userId: string): Promise<void> {
       assets: [
         { ticker: 'SPY', weight: 0.60, asset_type: 'etf' as const },
         { ticker: 'TLT', weight: 0.40, asset_type: 'etf' as const }
+      ]
+    },
+    {
+      name: 'Aggressive Tech & Crypto',
+      rebalance_type: 'deviation' as const,
+      deviation_threshold: 10.0,
+      benchmark_ticker: 'QQQ',
+      assets: [
+        { ticker: 'QQQ', weight: 0.50, asset_type: 'etf' as const },
+        { ticker: 'BTC', weight: 0.30, asset_type: 'crypto' as const },
+        { ticker: 'ETH', weight: 0.20, asset_type: 'crypto' as const }
+      ]
+    },
+    {
+      name: 'Rick Ferri Core Four',
+      rebalance_type: 'quarterly' as const,
+      deviation_threshold: 5.0,
+      benchmark_ticker: 'SPY',
+      assets: [
+        { ticker: 'VTI', weight: 0.48, asset_type: 'etf' as const },
+        { ticker: 'VXUS', weight: 0.24, asset_type: 'etf' as const },
+        { ticker: 'VNQ', weight: 0.08, asset_type: 'etf' as const },
+        { ticker: 'BND', weight: 0.20, asset_type: 'etf' as const }
+      ]
+    },
+    {
+      name: 'Bill Bernstein No Brainer',
+      rebalance_type: 'annually' as const,
+      deviation_threshold: 5.0,
+      benchmark_ticker: 'SPY',
+      assets: [
+        { ticker: 'SPY', weight: 0.25, asset_type: 'etf' as const },
+        { ticker: 'VB', weight: 0.25, asset_type: 'etf' as const },
+        { ticker: 'VXUS', weight: 0.25, asset_type: 'etf' as const },
+        { ticker: 'SHY', weight: 0.25, asset_type: 'etf' as const }
+      ]
+    },
+    {
+      name: 'Harry Browne Permanent Portfolio',
+      rebalance_type: 'annually' as const,
+      deviation_threshold: 5.0,
+      benchmark_ticker: 'SPY',
+      assets: [
+        { ticker: 'VTI', weight: 0.25, asset_type: 'etf' as const },
+        { ticker: 'TLT', weight: 0.25, asset_type: 'etf' as const },
+        { ticker: 'BIL', weight: 0.25, asset_type: 'etf' as const },
+        { ticker: 'GLD', weight: 0.25, asset_type: 'metal' as const }
+      ]
+    },
+    {
+      name: 'David Swensen Yale Endowment',
+      rebalance_type: 'annually' as const,
+      deviation_threshold: 5.0,
+      benchmark_ticker: 'SPY',
+      assets: [
+        { ticker: 'VTI', weight: 0.30, asset_type: 'etf' as const },
+        { ticker: 'EFA', weight: 0.15, asset_type: 'etf' as const },
+        { ticker: 'VWO', weight: 0.05, asset_type: 'etf' as const },
+        { ticker: 'VNQ', weight: 0.20, asset_type: 'etf' as const },
+        { ticker: 'TLT', weight: 0.15, asset_type: 'etf' as const },
+        { ticker: 'TIP', weight: 0.15, asset_type: 'etf' as const }
+      ]
+    },
+    {
+      name: 'Mebane Faber Ivy Portfolio',
+      rebalance_type: 'quarterly' as const,
+      deviation_threshold: 5.0,
+      benchmark_ticker: 'SPY',
+      assets: [
+        { ticker: 'VTI', weight: 0.20, asset_type: 'etf' as const },
+        { ticker: 'VXUS', weight: 0.20, asset_type: 'etf' as const },
+        { ticker: 'BND', weight: 0.20, asset_type: 'etf' as const },
+        { ticker: 'VNQ', weight: 0.20, asset_type: 'etf' as const },
+        { ticker: 'GSG', weight: 0.20, asset_type: 'etf' as const }
       ]
     }
   ];

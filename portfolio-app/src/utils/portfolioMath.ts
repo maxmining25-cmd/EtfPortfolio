@@ -76,6 +76,11 @@ export interface MetricReport {
   alpha: number;
   trackingError: number;
   informationRatio: number;
+  bestYear: number;
+  worstYear: number;
+  downsideDeviation: number;
+  var95: number;
+  cvar95: number;
 }
 
 export interface BacktestResult {
@@ -85,6 +90,8 @@ export interface BacktestResult {
   drawdowns: number[]; // portfolio drawdown over time
   metrics: MetricReport;
   correlationMatrix: Record<string, Record<string, number>>;
+  efficientFrontier?: { expectedReturn: number; volatility: number }[];
+  individualAssets?: { ticker: string; expectedReturn: number; volatility: number }[];
 }
 
 // ----------------------------------------------------
@@ -504,6 +511,36 @@ function solveMaxDiv(sigma: number[][], vols: number[]): number[] {
   return w;
 }
 
+/**
+ * Solve for an individual Efficient Frontier point under risk aversion lambda.
+ * Objective: Minimize -w^T * mu + lambda * w^T * Sigma * w
+ */
+function solveEfficientFrontierPoint(mu: number[], sigma: number[][], lambda: number): number[] {
+  const n = sigma.length;
+  let w = new Array(n).fill(1 / n);
+  const maxIter = 400;
+  let lr = 0.05;
+  
+  for (let iter = 0; iter < maxIter; iter++) {
+    const sigmaW = matMulVec(sigma, w);
+    const grad = new Array(n).fill(0);
+    for (let i = 0; i < n; i++) {
+      grad[i] = -mu[i] + 2 * lambda * sigmaW[i];
+    }
+    
+    const nextW = projectToSimplex(w.map((val, i) => val - lr * grad[i]));
+    
+    let diff = 0;
+    for (let i = 0; i < n; i++) diff += Math.abs(nextW[i] - w[i]);
+    w = nextW;
+    
+    if (diff < 1e-5) break;
+    lr *= 0.985;
+  }
+  
+  return w;
+}
+
 // ----------------------------------------------------
 // Backtester Implementation
 // ----------------------------------------------------
@@ -780,6 +817,92 @@ export function runBacktest(input: BacktestInput): BacktestResult {
     informationRatio = trackingError > 0 ? (cagr - bCagr) / trackingError : 0;
   }
   
+  // Best and Worst Calendar Year Returns
+  const valuesByYear: Record<number, { date: string; value: number }[]> = {};
+  for (let t = 0; t < numDays; t++) {
+    const year = parseInt(commonDates[t].substring(0, 4));
+    if (!isNaN(year)) {
+      if (!valuesByYear[year]) valuesByYear[year] = [];
+      valuesByYear[year].push({ date: commonDates[t], value: normalizedPortfolioValue[t] });
+    }
+  }
+
+  const yearReturns: number[] = [];
+  const yearsList = Object.keys(valuesByYear).map(Number).sort((a, b) => a - b);
+  for (let i = 0; i < yearsList.length; i++) {
+    const year = yearsList[i];
+    const yearData = valuesByYear[year];
+    let startVal = yearData[0].value;
+    if (i > 0) {
+      const prevYearData = valuesByYear[yearsList[i - 1]];
+      startVal = prevYearData[prevYearData.length - 1].value;
+    }
+    const endVal = yearData[yearData.length - 1].value;
+    const yrReturn = startVal > 0 ? (endVal - startVal) / startVal : 0;
+    yearReturns.push(yrReturn);
+  }
+
+  const bestYear = yearReturns.length > 0 ? Math.max(...yearReturns) : 0;
+  const worstYear = yearReturns.length > 0 ? Math.min(...yearReturns) : 0;
+
+  // Daily 95% Value at Risk (VaR) and Conditional Value at Risk (CVaR)
+  const sortedReturns = [...portfolioDailyReturns].sort((a, b) => a - b);
+  const varIndex = Math.floor(sortedReturns.length * 0.05);
+  const var95 = sortedReturns[varIndex] ? -sortedReturns[varIndex] : 0;
+  const tailReturns = sortedReturns.slice(0, varIndex + 1);
+  const cvar95 = tailReturns.length > 0 
+    ? -tailReturns.reduce((sum, r) => sum + r, 0) / tailReturns.length 
+    : 0;
+
+  const downsideDeviation = downsideVol;
+
+  // Tracing Efficient Frontier
+  const efficientFrontier: { expectedReturn: number; volatility: number }[] = [];
+  const individualAssets: { ticker: string; expectedReturn: number; volatility: number }[] = [];
+  
+  if (numDays >= 5 && assets.length > 1) {
+    const { means, cov } = calculateStats(returnsMatrix);
+    const annualMeans = means.map(m => m * 252);
+    const annualCov = cov.map(row => row.map(val => val * 252));
+    
+    // Individual assets
+    assets.forEach((asset, idx) => {
+      individualAssets.push({
+        ticker: asset.ticker,
+        expectedReturn: annualMeans[idx],
+        volatility: Math.sqrt(annualCov[idx][idx])
+      });
+    });
+    
+    // Lambda points
+    const lambdas = [
+      0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.7, 1.0, 1.3, 1.7, 2.2, 3.0, 4.0, 5.5, 7.5, 10.0, 15.0, 25.0, 50.0
+    ];
+    
+    for (const lambda of lambdas) {
+      const w = solveEfficientFrontierPoint(annualMeans, annualCov, lambda);
+      const r = w.reduce((sum, val, idx) => sum + val * annualMeans[idx], 0);
+      const v = Math.sqrt(quadForm(w, annualCov));
+      efficientFrontier.push({ expectedReturn: r, volatility: v });
+    }
+    
+    // Add min vol and max Sharpe points
+    const wMinVol = solveMinVol(annualCov);
+    efficientFrontier.push({
+      expectedReturn: wMinVol.reduce((sum, val, idx) => sum + val * annualMeans[idx], 0),
+      volatility: Math.sqrt(quadForm(wMinVol, annualCov))
+    });
+    
+    const wMaxSharpe = solveMaxSharpe(annualMeans, annualCov, riskFreeRate);
+    efficientFrontier.push({
+      expectedReturn: wMaxSharpe.reduce((sum, val, idx) => sum + val * annualMeans[idx], 0),
+      volatility: Math.sqrt(quadForm(wMaxSharpe, annualCov))
+    });
+    
+    // Sort frontier points by volatility ascending
+    efficientFrontier.sort((a, b) => a.volatility - b.volatility);
+  }
+
   return {
     dates: commonDates,
     portfolioValue: normalizedPortfolioValue,
@@ -796,9 +919,16 @@ export function runBacktest(input: BacktestInput): BacktestResult {
       beta,
       alpha,
       trackingError,
-      informationRatio
+      informationRatio,
+      bestYear,
+      worstYear,
+      downsideDeviation,
+      var95,
+      cvar95
     },
-    correlationMatrix
+    correlationMatrix,
+    efficientFrontier,
+    individualAssets
   };
 }
 

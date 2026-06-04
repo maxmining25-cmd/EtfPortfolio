@@ -34,6 +34,7 @@ Create a premium, design-forward personal web application for investment portfol
   - **Equity Curve Chart:** Logarithmic/Linear scale toggle, showing the portfolio value vs. the benchmark over time.
   - **Drawdown Area Chart:** A synchronized filled red-gradient area chart below the equity curve to visualize historical drawdowns.
   - **Correlation Heatmap:** A visual grid showing the correlation matrix between assets in the portfolio based on historical daily returns.
+  - **Efficient Frontier Scatter Plot:** A tabbed visualization plotting expected return vs. volatility. Draws the indigo frontier curve line (traced with 20 lambda coordinate points), Standalone Assets (green squares, labeled with ticker names), and the Current Portfolio (dynamic orange dot).
 - **Sync Status Widget:** Clear visual banner showing when the database was last updated, next scheduled run, and log of the latest import run.
 
 ### 2. Portfolio Optimization & Theories (Stock Portfolio Expert Perspective)
@@ -56,6 +57,9 @@ Create a premium, design-forward personal web application for investment portfol
   - **Calmar Ratio:** Return-to-drawdown ratio (CAGR / Max Drawdown).
   - **Portfolio Beta & Jensen's Alpha:** Systematic risk and excess return relative to the selected benchmark.
   - **Tracking Error & Information Ratio:** Benchmark replication consistency.
+  - **Best Year / Worst Year:** Best and worst calendar year returns (January-December).
+  - **Downside Deviation:** Volatility of negative daily returns, annualized.
+  - **Daily 95% VaR & daily 95% CVaR:** 95% Value at Risk (5th percentile of daily returns) and 95% Conditional Value at Risk (mean of daily returns below the 95% VaR threshold).
 - **Historical Assumptions:** Assume daily reinvestment of dividends (`adjClose` prices from Yahoo Finance).
 
 ### 4. Data Import & Scheduler
@@ -87,7 +91,7 @@ Create a premium, design-forward personal web application for investment portfol
   ```
 
 ### 6. Administration & Auto-Population
-- **Workspace Auto-Population:** When a user logs in and their saved portfolio list is empty, automatically seed their account with pre-defined professional template portfolios ("Ray Dalio All-Weather" and "Classic 60/40 Balanced") and their assets.
+- **Workspace Auto-Population:** When a user logs in and their saved portfolio list is empty, automatically seed their account with 8 pre-defined popular lazy portfolios (Ray Dalio All-Weather, Classic 60/40 Balanced, Aggressive Tech & Crypto, Rick Ferri Core Four, Bill Bernstein No Brainer, Harry Browne Permanent Portfolio, David Swensen Yale Endowment, and Mebane Faber Ivy Portfolio) and their assets.
 - **Administrative Deletion APIs & UI:**
   - Secure server-side routes (`/api/admin/users` and `/api/admin/quotes`) utilizing the Supabase service-role client to allow administrators to perform CRUD deletions that bypass normal RLS policies.
   - Multi-select checkboxes, selection headers, and bulk deletion controls in the Admin Panel for both User Directory and EOD Quotes tables.
