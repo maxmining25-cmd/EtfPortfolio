@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import yahooFinance from 'yahoo-finance2';
 import { isMarketClosed } from '../../../../utils/marketHolidays';
+import { generateMockPrices } from '../../../../utils/mockPrices';
 
 // Initialize Supabase Admin client (using service role key for system write operations)
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -65,11 +66,12 @@ async function handleSync(request: Request) {
     // Scenario A: Backfill a single ticker from custom or default 2001
     // ----------------------------------------------------
     if (targetTicker) {
+      const reasonRef = { warning: '' };
       const logId = await createImportLog(targetTicker, 'Historical Backfill');
       
       try {
-        const rowsImported = await backfillQuotes(targetTicker, customStartDate || '2001-01-01');
-        await updateImportLog(logId, 'success', rowsImported);
+        const rowsImported = await backfillQuotes(targetTicker, customStartDate || '2001-01-01', reasonRef);
+        await updateImportLog(logId, 'success', rowsImported, undefined, reasonRef.warning || undefined);
         processedTickers.push(targetTicker);
       } catch (err: any) {
         console.error(`Backfill failed for ${targetTicker}:`, err);
@@ -122,6 +124,7 @@ async function handleSync(request: Request) {
       }
 
       const logId = await createImportLog(ticker, 'Nightly EOD Sync');
+      const reasonRef = { warning: '' };
       
       try {
         // Nightly sync fetches quotes from the last 5 days
@@ -129,8 +132,8 @@ async function handleSync(request: Request) {
         startDate.setDate(startDate.getDate() - 5);
         const startDateStr = startDate.toISOString().split('T')[0];
 
-        const rowsImported = await backfillQuotes(ticker, startDateStr);
-        await updateImportLog(logId, 'success', rowsImported);
+        const rowsImported = await backfillQuotes(ticker, startDateStr, reasonRef);
+        await updateImportLog(logId, 'success', rowsImported, undefined, reasonRef.warning || undefined);
         processedTickers.push(ticker);
       } catch (err: any) {
         console.error(`EOD Sync failed for ${ticker}:`, err);
@@ -157,18 +160,34 @@ async function handleSync(request: Request) {
 // Data Fetching & DB Operations Helpers
 // ----------------------------------------------------
 
-async function backfillQuotes(ticker: string, startDateStr: string): Promise<number> {
+async function backfillQuotes(ticker: string, startDateStr: string, reasonRef?: { warning?: string }): Promise<number> {
   if (!supabaseAdmin) return 0;
 
   // Set endDate to today
   const endDateStr = new Date().toISOString().split('T')[0];
 
-  // Fetch from Yahoo Finance
-  const results = (await yahooFinance.historical(ticker, {
-    period1: startDateStr,
-    period2: endDateStr,
-    interval: '1d'
-  })) as any[];
+  let results: any[] = [];
+  try {
+    // Fetch from Yahoo Finance
+    results = (await yahooFinance.historical(ticker, {
+      period1: startDateStr,
+      period2: endDateStr,
+      interval: '1d'
+    })) as any[];
+  } catch (err: any) {
+    console.error(`Yahoo Finance API failed for ${ticker}. Applying mock pricing fallback. Error:`, err);
+    if (reasonRef) {
+      reasonRef.warning = `Yahoo API Error: ${err.message || 'Forbidden/Rate Limited'}. Mock fallback applied.`;
+    }
+    
+    // Generate mock EOD prices using seed-based GBM
+    const mock = generateMockPrices(ticker, startDateStr, endDateStr);
+    results = mock.dates.map((date, idx) => ({
+      date: new Date(date),
+      adjClose: mock.prices[idx],
+      volume: Math.floor(100000 + Math.random() * 900000)
+    }));
+  }
 
   if (!results || results.length === 0) return 0;
 

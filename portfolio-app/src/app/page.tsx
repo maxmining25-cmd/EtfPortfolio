@@ -22,6 +22,7 @@ import {
   getUserProfile,
   updateUserProfile,
   getImportLogs,
+  prepopulateUserPortfolios,
   DBPortfolio,
   DBAsset,
   DBImportLog
@@ -80,7 +81,11 @@ function DashboardContent() {
           setRiskFreeRate(Number(profile.risk_free_rate) || 0.04);
         }
 
-        const ports = await getPortfolios(user.id);
+        let ports = await getPortfolios(user.id);
+        if (ports.length === 0) {
+          await prepopulateUserPortfolios(user.id);
+          ports = await getPortfolios(user.id);
+        }
         setPortfolios(ports);
         if (ports.length > 0) {
           setSelectedPortfolioId(ports[0].id);

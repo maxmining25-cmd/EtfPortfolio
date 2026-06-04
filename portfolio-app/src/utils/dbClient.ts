@@ -575,12 +575,17 @@ export async function adminAddQuote(quote: Partial<DBQuote>): Promise<DBQuote> {
   }
 
   if (!supabase) throw new Error('Supabase client not initialized.');
-  const { data, error } = await supabase
-    .from('quotes')
-    .insert([quote])
-    .select()
-    .single();
-  if (error) throw error;
+  const { data: { session } } = await supabase.auth.getSession();
+  const res = await fetch('/api/admin/quotes', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session?.access_token || ''}`
+    },
+    body: JSON.stringify({ quote })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to add EOD quote.');
   return data;
 }
 
@@ -598,13 +603,17 @@ export async function adminUpdateQuote(quoteId: string, updates: Partial<DBQuote
   }
 
   if (!supabase) throw new Error('Supabase client not initialized.');
-  const { data, error } = await supabase
-    .from('quotes')
-    .update(updates)
-    .eq('id', quoteId)
-    .select()
-    .single();
-  if (error) throw error;
+  const { data: { session } } = await supabase.auth.getSession();
+  const res = await fetch('/api/admin/quotes', {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session?.access_token || ''}`
+    },
+    body: JSON.stringify({ id: quoteId, updates })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to update EOD quote.');
   return data;
 }
 
@@ -618,9 +627,120 @@ export async function adminDeleteQuote(quoteId: string): Promise<void> {
   }
 
   if (!supabase) throw new Error('Supabase client not initialized.');
-  const { error } = await supabase
-    .from('quotes')
-    .delete()
-    .eq('id', quoteId);
-  if (error) throw error;
+  const { data: { session } } = await supabase.auth.getSession();
+  const res = await fetch('/api/admin/quotes', {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session?.access_token || ''}`
+    },
+    body: JSON.stringify({ id: quoteId })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to delete EOD quote.');
+}
+
+export async function adminMassDeleteQuotes(params: { ids?: string[]; ticker?: string }): Promise<void> {
+  if (isDemoMode) {
+    const list = localStorage.getItem('aurawealth_demo_quotes');
+    let customQuotes = list ? JSON.parse(list) : [];
+    if (params.ids) {
+      customQuotes = customQuotes.filter((q: DBQuote) => !params.ids!.includes(q.id));
+    } else if (params.ticker) {
+      customQuotes = customQuotes.filter((q: DBQuote) => q.ticker.toUpperCase() !== params.ticker!.toUpperCase());
+    }
+    localStorage.setItem('aurawealth_demo_quotes', JSON.stringify(customQuotes));
+    return;
+  }
+
+  if (!supabase) throw new Error('Supabase client not initialized.');
+  const { data: { session } } = await supabase.auth.getSession();
+  const res = await fetch('/api/admin/quotes', {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session?.access_token || ''}`
+    },
+    body: JSON.stringify(params)
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to mass delete EOD quotes.');
+}
+
+export async function adminDeleteUser(userId: string): Promise<void> {
+  if (isDemoMode) {
+    const list = localStorage.getItem('aurawealth_demo_users');
+    const users = list ? JSON.parse(list) : [];
+    const remaining = users.filter((u: any) => u.id !== userId);
+    localStorage.setItem('aurawealth_demo_users', JSON.stringify(remaining));
+    return;
+  }
+
+  if (!supabase) throw new Error('Supabase client not initialized.');
+  const { data: { session } } = await supabase.auth.getSession();
+  const res = await fetch('/api/admin/users', {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session?.access_token || ''}`
+    },
+    body: JSON.stringify({ id: userId })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to delete user.');
+}
+
+export async function adminMassDeleteUsers(userIds: string[]): Promise<void> {
+  if (isDemoMode) {
+    const list = localStorage.getItem('aurawealth_demo_users');
+    const users = list ? JSON.parse(list) : [];
+    const remaining = users.filter((u: any) => !userIds.includes(u.id));
+    localStorage.setItem('aurawealth_demo_users', JSON.stringify(remaining));
+    return;
+  }
+
+  if (!supabase) throw new Error('Supabase client not initialized.');
+  const { data: { session } } = await supabase.auth.getSession();
+  const res = await fetch('/api/admin/users', {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session?.access_token || ''}`
+    },
+    body: JSON.stringify({ ids: userIds })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to mass delete users.');
+}
+
+export async function prepopulateUserPortfolios(userId: string): Promise<void> {
+  const defaultPortfolios = [
+    {
+      name: 'Ray Dalio All-Weather',
+      rebalance_type: 'quarterly' as const,
+      deviation_threshold: 5.0,
+      benchmark_ticker: 'SPY',
+      assets: [
+        { ticker: 'SPY', weight: 0.30, asset_type: 'etf' as const },
+        { ticker: 'TLT', weight: 0.40, asset_type: 'etf' as const },
+        { ticker: 'GLD', weight: 0.30, asset_type: 'metal' as const }
+      ]
+    },
+    {
+      name: 'Classic 60/40 Balanced',
+      rebalance_type: 'annually' as const,
+      deviation_threshold: 5.0,
+      benchmark_ticker: 'SPY',
+      assets: [
+        { ticker: 'SPY', weight: 0.60, asset_type: 'etf' as const },
+        { ticker: 'TLT', weight: 0.40, asset_type: 'etf' as const }
+      ]
+    }
+  ];
+
+  for (const portInfo of defaultPortfolios) {
+    const { assets: portAssets, ...portData } = portInfo;
+    const newPort = await createPortfolio(userId, portData);
+    await savePortfolioAssets(newPort.id, portAssets);
+  }
 }

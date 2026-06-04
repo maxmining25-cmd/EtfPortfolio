@@ -13,6 +13,9 @@ import {
   adminAddQuote,
   adminUpdateQuote,
   adminDeleteQuote,
+  adminDeleteUser,
+  adminMassDeleteUsers,
+  adminMassDeleteQuotes,
   DBQuote
 } from '../utils/dbClient';
 import { 
@@ -52,6 +55,10 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  // Selected IDs for mass deletion
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [selectedQuoteIds, setSelectedQuoteIds] = useState<string[]>([]);
+
   // ----------------------------------------------------
   // Tab 1: User Accounts States & Logic
   // ----------------------------------------------------
@@ -59,6 +66,113 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [userSearch, setUserSearch] = useState('');
   const [actioningUserId, setActioningUserId] = useState<string | null>(null);
+
+  const handleDeleteUser = async (targetUser: DBUser) => {
+    if (targetUser.id === user?.id) {
+      setError('Failsafe: You cannot delete your own account.');
+      return;
+    }
+    if (!confirm(`Are you sure you want to permanently delete user account ${targetUser.email}? This cannot be undone.`)) return;
+    try {
+      setActioningUserId(targetUser.id);
+      setError(null);
+      setSuccess(null);
+      await adminDeleteUser(targetUser.id);
+      setUsers(prev => prev.filter(u => u.id !== targetUser.id));
+      setSelectedUserIds(prev => prev.filter(id => id !== targetUser.id));
+      setSuccess(`Successfully deleted user account ${targetUser.email}.`);
+    } catch (err: any) {
+      setError(err?.message || 'Failed to delete user.');
+    } finally {
+      setActioningUserId(null);
+    }
+  };
+
+  const handleMassDeleteUsers = async () => {
+    const idsToDelete = selectedUserIds.filter(id => id !== user?.id);
+    if (idsToDelete.length === 0) return;
+    if (!confirm(`Are you sure you want to permanently delete ${idsToDelete.length} selected user accounts? This will delete all their portfolios and assets.`)) return;
+    try {
+      setError(null);
+      setSuccess(null);
+      await adminMassDeleteUsers(idsToDelete);
+      setUsers(prev => prev.filter(u => !idsToDelete.includes(u.id)));
+      setSelectedUserIds([]);
+      setSuccess(`Successfully deleted ${idsToDelete.length} user accounts.`);
+    } catch (err: any) {
+      setError(err?.message || 'Failed to mass delete users.');
+    }
+  };
+
+  const handleSelectAllUsers = (checked: boolean) => {
+    if (checked) {
+      const selectableIds = filteredUsers.filter(u => u.id !== user?.id).map(u => u.id);
+      setSelectedUserIds(selectableIds);
+    } else {
+      setSelectedUserIds([]);
+    }
+  };
+
+  const handleSelectUser = (userId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedUserIds(prev => [...prev, userId]);
+    } else {
+      setSelectedUserIds(prev => prev.filter(id => id !== userId));
+    }
+  };
+
+  const handleMassDeleteQuotes = async () => {
+    if (selectedQuoteIds.length === 0) return;
+    if (!confirm(`Are you sure you want to delete the ${selectedQuoteIds.length} selected EOD quotes?`)) return;
+    try {
+      setError(null);
+      setSuccess(null);
+      await adminMassDeleteQuotes({ ids: selectedQuoteIds });
+      setQuotes(prev => prev.filter(q => !selectedQuoteIds.includes(q.id)));
+      setSelectedQuoteIds([]);
+      setSuccess(`Successfully deleted ${selectedQuoteIds.length} EOD quotes.`);
+    } catch (err: any) {
+      setError(err?.message || 'Failed to mass delete quotes.');
+    }
+  };
+
+  const handleWipeTickerQuotes = async () => {
+    if (!quoteSearch.trim()) return;
+    const tickerToWipe = quoteSearch.trim().toUpperCase();
+    if (!confirm(`Are you sure you want to delete ALL EOD quotes for ticker "${tickerToWipe}"? This cannot be undone.`)) return;
+    try {
+      setError(null);
+      setSuccess(null);
+      setLoadingQuotes(true);
+      await adminMassDeleteQuotes({ ticker: tickerToWipe });
+      setQuotes(prev => prev.filter(q => q.ticker.toUpperCase() !== tickerToWipe));
+      setSelectedQuoteIds(prev => prev.filter(id => {
+        const q = quotes.find(item => item.id === id);
+        return q ? q.ticker.toUpperCase() !== tickerToWipe : true;
+      }));
+      setSuccess(`Successfully wiped all EOD quotes for ${tickerToWipe}.`);
+    } catch (err: any) {
+      setError(err?.message || 'Failed to wipe ticker quotes.');
+    } finally {
+      setLoadingQuotes(false);
+    }
+  };
+
+  const handleSelectAllQuotes = (checked: boolean) => {
+    if (checked) {
+      setSelectedQuoteIds(quotes.map(q => q.id));
+    } else {
+      setSelectedQuoteIds([]);
+    }
+  };
+
+  const handleSelectQuote = (quoteId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedQuoteIds(prev => [...prev, quoteId]);
+    } else {
+      setSelectedQuoteIds(prev => prev.filter(id => id !== quoteId));
+    }
+  };
 
   const fetchUsers = async () => {
     try {
@@ -352,8 +466,8 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
           /* ======================================================== */
           <div className="flex-1 flex flex-col overflow-hidden">
             {/* Search Controls */}
-            <div className="p-6 pb-2 shrink-0">
-              <div className="relative">
+            <div className="p-6 pb-2 shrink-0 flex flex-col sm:flex-row gap-4 items-center justify-between">
+              <div className="relative flex-1 w-full">
                 <span className="absolute left-3.5 inset-y-0 flex items-center text-slate-500">
                   <Search size={16} />
                 </span>
@@ -365,6 +479,15 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
                   className="w-full bg-slate-900/60 border border-white/10 rounded-xl py-2.5 pl-10 pr-4 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/60 transition"
                 />
               </div>
+              {selectedUserIds.length > 0 && (
+                <button
+                  onClick={handleMassDeleteUsers}
+                  className="px-4 py-2.5 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl text-xs uppercase tracking-wider transition flex items-center gap-2 shadow-lg shrink-0 w-full sm:w-auto justify-center"
+                >
+                  <Trash2 size={14} />
+                  Delete Selected ({selectedUserIds.length})
+                </button>
+              )}
             </div>
 
             {/* User Directory Table */}
@@ -384,6 +507,17 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="bg-slate-900/80 border-b border-white/10 text-slate-400 text-xxs font-bold uppercase tracking-wider">
+                        <th className="py-3.5 px-4 font-semibold w-10">
+                          <input
+                            type="checkbox"
+                            className="rounded border-white/10 bg-slate-950 text-indigo-600 focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                            checked={
+                              filteredUsers.filter(u => u.id !== user?.id).length > 0 &&
+                              selectedUserIds.length === filteredUsers.filter(u => u.id !== user?.id).length
+                            }
+                            onChange={(e) => handleSelectAllUsers(e.target.checked)}
+                          />
+                        </th>
                         <th className="py-3.5 px-4 font-semibold">User Email</th>
                         <th className="py-3.5 px-4 font-semibold hidden md:table-cell">User ID</th>
                         <th className="py-3.5 px-4 font-semibold">Roles</th>
@@ -395,6 +529,7 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
                       {filteredUsers.map((item) => {
                         const isSelf = item.id === user?.id;
                         const isUserActioning = actioningUserId === item.id;
+                        const isChecked = selectedUserIds.includes(item.id);
                         
                         return (
                           <tr 
@@ -403,6 +538,15 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
                               item.is_locked ? 'bg-red-950/5' : ''
                             }`}
                           >
+                            <td className="py-4 px-4 w-10">
+                              <input
+                                type="checkbox"
+                                className="rounded border-white/10 bg-slate-950 text-indigo-600 focus:ring-0 focus:ring-offset-0 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                                disabled={isSelf}
+                                checked={isChecked}
+                                onChange={(e) => handleSelectUser(item.id, e.target.checked)}
+                              />
+                            </td>
                             <td className="py-4 px-4">
                               <div className="flex items-center gap-2">
                                 <span className="font-semibold text-white truncate max-w-[200px]">
@@ -477,6 +621,15 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
                                 >
                                   {item.is_locked ? <Unlock size={12} /> : <Lock size={12} />}
                                   {item.is_locked ? 'Unlock' : 'Lock'}
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteUser(item)}
+                                  disabled={isSelf || isUserActioning}
+                                  className="px-3 py-1.5 rounded-lg border border-red-500/20 hover:border-red-500/35 bg-red-500/5 hover:bg-red-500/10 text-red-400 text-xxs font-semibold flex items-center gap-1 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                                  title="Delete Account Permanently"
+                                >
+                                  <Trash2 size={12} />
+                                  Delete
                                 </button>
                               </div>
                             </td>
@@ -657,9 +810,9 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
                 </button>
               </form>
 
-              {/* Search quotes input */}
-              <div className="flex items-center gap-2 shrink-0">
-                <div className="relative flex-1">
+              {/* Search quotes input & Delete Controls */}
+              <div className="flex flex-col sm:flex-row items-center gap-2 shrink-0">
+                <div className="relative flex-1 w-full">
                   <span className="absolute left-3.5 inset-y-0 flex items-center text-slate-500">
                     <Search size={14} />
                   </span>
@@ -671,13 +824,36 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
                     className="w-full bg-slate-900/60 border border-white/10 rounded-xl py-2 pl-9 pr-4 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/60 transition"
                   />
                 </div>
-                <button
-                  onClick={() => fetchQuotes(quoteSearch || undefined)}
-                  className="px-4 py-2 bg-slate-900 border border-white/10 hover:border-white/20 text-slate-300 font-bold rounded-xl text-xxs uppercase tracking-wider transition flex items-center gap-1"
-                >
-                  <RefreshCw size={12} className={loadingQuotes ? 'animate-spin' : ''} />
-                  Load Quotes
-                </button>
+                <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+                  <button
+                    onClick={() => fetchQuotes(quoteSearch || undefined)}
+                    className="px-4 py-2 bg-slate-900 border border-white/10 hover:border-white/20 text-slate-300 font-bold rounded-xl text-xxs uppercase tracking-wider transition flex items-center gap-1 shrink-0"
+                  >
+                    <RefreshCw size={12} className={loadingQuotes ? 'animate-spin' : ''} />
+                    Load Quotes
+                  </button>
+                  {quoteSearch.trim() && (
+                    <button
+                      type="button"
+                      onClick={handleWipeTickerQuotes}
+                      className="px-4 py-2 bg-red-950/40 border border-red-500/20 hover:border-red-500/40 text-red-400 font-bold rounded-xl text-xxs uppercase tracking-wider transition flex items-center gap-1 shrink-0"
+                      title={`Wipe all EOD data for ${quoteSearch}`}
+                    >
+                      <Trash2 size={12} />
+                      Wipe {quoteSearch}
+                    </button>
+                  )}
+                  {selectedQuoteIds.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleMassDeleteQuotes}
+                      className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl text-xxs uppercase tracking-wider transition flex items-center gap-1 shrink-0"
+                    >
+                      <Trash2 size={12} />
+                      Delete Selected ({selectedQuoteIds.length})
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Data Table */}
@@ -698,6 +874,14 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
                     <table className="w-full text-left border-collapse">
                       <thead>
                         <tr className="bg-slate-900/80 border-b border-white/10 text-slate-400 text-xxs font-bold uppercase tracking-wider">
+                          <th className="py-2.5 px-3 font-semibold w-10">
+                            <input
+                              type="checkbox"
+                              className="rounded border-white/10 bg-slate-950 text-indigo-600 focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                              checked={quotes.length > 0 && selectedQuoteIds.length === quotes.length}
+                              onChange={(e) => handleSelectAllQuotes(e.target.checked)}
+                            />
+                          </th>
                           <th className="py-2.5 px-3 font-semibold">Ticker</th>
                           <th className="py-2.5 px-3 font-semibold">Date</th>
                           <th className="py-2.5 px-3 font-semibold">Adj Close Price</th>
@@ -709,9 +893,18 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
                         {quotes.map((q) => {
                           const isEditing = editingQuoteId === q.id;
                           const isUpdating = updatingQuoteId === q.id;
+                          const isChecked = selectedQuoteIds.includes(q.id);
 
                           return (
                             <tr key={q.id} className="hover:bg-white/[0.01] transition-colors">
+                              <td className="py-2.5 px-3 font-sans w-10">
+                                <input
+                                  type="checkbox"
+                                  className="rounded border-white/10 bg-slate-950 text-indigo-600 focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                                  checked={isChecked}
+                                  onChange={(e) => handleSelectQuote(q.id, e.target.checked)}
+                                />
+                              </td>
                               <td className="py-2.5 px-3 font-sans font-bold text-white uppercase">{q.ticker}</td>
                               <td className="py-2.5 px-3 text-slate-400">{q.date}</td>
                               <td className="py-2.5 px-3">
@@ -744,6 +937,7 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
                                 {isEditing ? (
                                   <div className="flex items-center justify-end gap-1.5">
                                     <button
+                                      type="button"
                                       onClick={() => handleSaveEditQuote(q)}
                                       disabled={isUpdating}
                                       className="p-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 rounded"
@@ -752,6 +946,7 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
                                       <Check size={11} />
                                     </button>
                                     <button
+                                      type="button"
                                       onClick={() => setEditingQuoteId(null)}
                                       disabled={isUpdating}
                                       className="p-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded"
@@ -763,6 +958,7 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
                                 ) : (
                                   <div className="flex items-center justify-end gap-1.5">
                                     <button
+                                      type="button"
                                       onClick={() => handleStartEditQuote(q)}
                                       className="p-1 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white rounded border border-white/10"
                                       title="Edit Price/Volume"
@@ -770,6 +966,7 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
                                       <Edit2 size={11} />
                                     </button>
                                     <button
+                                      type="button"
                                       onClick={() => handleDeleteQuote(q)}
                                       className="p-1 bg-slate-900 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/20 rounded border border-white/10"
                                       title="Delete Row"

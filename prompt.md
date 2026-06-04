@@ -64,6 +64,7 @@ Create a premium, design-forward personal web application for investment portfol
   - Skips US market holidays (using `market-holidays`) and weekends.
   - Fetch EOD prices only for active tickers present in any user portfolio.
   - Update last sync timestamp on the dashboard database status widget.
+  - **API Fallback:** Intercepts Yahoo Finance fetch failures (such as cloud IP blocks on Vercel) and gracefully falls back to generating deterministic mock prices via seed-based Geometric Brownian Motion, logging detailed warnings in the `import_log` table.
 
 ### 5. Telegram Integration & Rebalancing Alerts
 - **Dispatch Scheduling:** Selectable dispatch time (HH:MM) and per-portfolio toggle to enable Telegram alerts.
@@ -84,6 +85,14 @@ Create a premium, design-forward personal web application for investment portfol
   • CAGR: XX.X% (vs Benchmark: XX.X%)
   • Sharpe: X.XX | Max Drawdown: -XX.X%
   ```
+
+### 6. Administration & Auto-Population
+- **Workspace Auto-Population:** When a user logs in and their saved portfolio list is empty, automatically seed their account with pre-defined professional template portfolios ("Ray Dalio All-Weather" and "Classic 60/40 Balanced") and their assets.
+- **Administrative Deletion APIs & UI:**
+  - Secure server-side routes (`/api/admin/users` and `/api/admin/quotes`) utilizing the Supabase service-role client to allow administrators to perform CRUD deletions that bypass normal RLS policies.
+  - Multi-select checkboxes, selection headers, and bulk deletion controls in the Admin Panel for both User Directory and EOD Quotes tables.
+  - A "Wipe Ticker" action in the Quotes tab allowing admins to delete all EOD quotes for a searched ticker at once.
+  - Account locking overlays and administrator demotion buttons with failsafe checks that prevent self-deletion or self-demotion.
 
 ---
 
