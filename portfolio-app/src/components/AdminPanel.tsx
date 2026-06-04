@@ -165,7 +165,7 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
 
   const handleSelectAllQuotes = (checked: boolean) => {
     if (checked) {
-      setSelectedQuoteIds(quotes.map(q => q.id));
+      setSelectedQuoteIds(quotes.slice(0, 20).map(q => q.id));
     } else {
       setSelectedQuoteIds([]);
     }
@@ -1156,11 +1156,16 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
                             <input
                               type="checkbox"
                               className="rounded border-white/10 bg-slate-950 text-indigo-600 focus:ring-0 focus:ring-offset-0 cursor-pointer"
-                              checked={quotes.length > 0 && selectedQuoteIds.length === quotes.length}
+                              checked={quotes.slice(0, 20).length > 0 && quotes.slice(0, 20).every(q => selectedQuoteIds.includes(q.id))}
                               onChange={(e) => handleSelectAllQuotes(e.target.checked)}
                             />
                           </th>
-                          <th className="py-2.5 px-3 font-semibold">Ticker</th>
+                          <th className="py-2.5 px-3 font-semibold">
+                            Ticker
+                            <span className="text-[9px] text-indigo-400 font-medium tracking-normal lowercase normal-case ml-1">
+                              (showing last {Math.min(20, quotes.length)} of {quotes.length})
+                            </span>
+                          </th>
                           <th className="py-2.5 px-3 font-semibold">Date</th>
                           <th className="py-2.5 px-3 font-semibold">Adj Close Price</th>
                           <th className="py-2.5 px-3 font-semibold">Volume</th>
@@ -1168,7 +1173,7 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-white/5 text-[11px] font-mono">
-                        {quotes.map((q) => {
+                        {quotes.slice(0, 20).map((q) => {
                           const isEditing = editingQuoteId === q.id;
                           const isUpdating = updatingQuoteId === q.id;
                           const isChecked = selectedQuoteIds.includes(q.id);

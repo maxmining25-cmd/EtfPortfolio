@@ -51,6 +51,7 @@ function DashboardContent() {
   const [selectedPortfolioId, setSelectedPortfolioId] = useState<string | null>(null);
   const [assets, setAssets] = useState<DBAsset[]>([]);
   const [backtestResult, setBacktestResult] = useState<BacktestResult | null>(null);
+  const [lastQuoteDates, setLastQuoteDates] = useState<Record<string, string>>({});
   
   // Settings & Profile
   const [telegramChatId, setTelegramChatId] = useState('');
@@ -153,6 +154,16 @@ function DashboardContent() {
       
       // Fetch quote histories (either local mock or Supabase table)
       const quotesMap = await getQuotesForTickers(allTickers, '2001-01-01');
+
+      // Update last quote dates for Sandbox hints
+      const datesRecord: Record<string, string> = {};
+      Object.keys(quotesMap).forEach(t => {
+        const dates = quotesMap[t]?.dates || [];
+        if (dates.length > 0) {
+          datesRecord[t] = dates[dates.length - 1];
+        }
+      });
+      setLastQuoteDates(prev => ({ ...prev, ...datesRecord }));
       
       // Construct asset datas
       const assetDatas = assets.map(a => ({
@@ -517,6 +528,7 @@ function DashboardContent() {
                 onUpdateAssets={handleUpdateAssets}
                 onOptimize={handleOptimizeWeights}
                 isCalculating={isCalculating}
+                lastQuoteDates={lastQuoteDates}
               />
               <CashFlowConfig
                 initialAmount={initialAmount}

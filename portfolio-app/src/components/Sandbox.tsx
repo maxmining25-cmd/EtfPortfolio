@@ -23,13 +23,15 @@ interface SandboxProps {
   onUpdateAssets: (assets: DBAsset[]) => void;
   onOptimize: (type: 'equal' | 'sharpe' | 'min_vol' | 'risk_parity' | 'max_div' | 'sortino') => Promise<void>;
   isCalculating: boolean;
+  lastQuoteDates?: Record<string, string>;
 }
 
 export default function Sandbox({
   assets,
   onUpdateAssets,
   onOptimize,
-  isCalculating
+  isCalculating,
+  lastQuoteDates
 }: SandboxProps) {
   const [newTicker, setNewTicker] = useState('');
   const [newType, setNewType] = useState<'etf' | 'crypto' | 'metal'>('etf');
@@ -250,9 +252,9 @@ export default function Sandbox({
           <button
             onClick={() => onOptimize('equal')}
             disabled={isCalculating || assets.length === 0}
-            className="group relative px-3 py-2 text-xxs font-bold uppercase bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 hover:bg-slate-900 text-slate-300 rounded-xl transition disabled:opacity-30 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none"
+            className="group relative flex flex-col items-center justify-center text-center min-h-[56px] px-1 py-1 text-[9px] min-[370px]:text-[10px] font-bold uppercase bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 hover:bg-slate-900 text-slate-300 rounded-xl transition disabled:opacity-30 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none"
           >
-            Equal Weight
+            <span>Equal Weight</span>
             <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block group-focus:block w-48 p-2 bg-slate-900 border border-white/10 rounded-lg text-[9px] text-slate-300 normal-case shadow-xl leading-relaxed z-50 pointer-events-none text-left">
               <strong>Equal Weight (1/N):</strong> Allocates an equal percentage of weight to all assets in the portfolio.
             </div>
@@ -260,9 +262,10 @@ export default function Sandbox({
           <button
             onClick={() => onOptimize('sharpe')}
             disabled={isCalculating || assets.length === 0}
-            className="group relative px-3 py-2 text-xxs font-bold uppercase bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 hover:bg-slate-900 text-slate-300 rounded-xl transition disabled:opacity-30 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none"
+            className="group relative flex flex-col items-center justify-center text-center min-h-[56px] px-1 py-1 text-[9px] min-[370px]:text-[10px] font-bold uppercase bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 hover:bg-slate-900 text-slate-300 rounded-xl transition disabled:opacity-30 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none"
           >
-            Max Sharpe (Markowitz)
+            <span>Max Sharpe</span>
+            <span className="text-[7.5px] opacity-60 font-medium normal-case mt-0.5 leading-none">(Markowitz)</span>
             <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block group-focus:block w-48 p-2 bg-slate-900 border border-white/10 rounded-lg text-[9px] text-slate-300 normal-case shadow-xl leading-relaxed z-50 pointer-events-none text-left">
               <strong>Max Sharpe:</strong> Optimizes weights to maximize expected excess return per unit of volatility (tangency portfolio).
             </div>
@@ -270,9 +273,10 @@ export default function Sandbox({
           <button
             onClick={() => onOptimize('min_vol')}
             disabled={isCalculating || assets.length === 0}
-            className="group relative px-3 py-2 text-xxs font-bold uppercase bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 hover:bg-slate-900 text-slate-300 rounded-xl transition disabled:opacity-30 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none"
+            className="group relative flex flex-col items-center justify-center text-center min-h-[56px] px-1 py-1 text-[9px] min-[370px]:text-[10px] font-bold uppercase bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 hover:bg-slate-900 text-slate-300 rounded-xl transition disabled:opacity-30 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none"
           >
-            Min Volatility (GMV)
+            <span>Min Volatility</span>
+            <span className="text-[7.5px] opacity-60 font-medium normal-case mt-0.5 leading-none">(GMV)</span>
             <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block group-focus:block w-48 p-2 bg-slate-900 border border-white/10 rounded-lg text-[9px] text-slate-300 normal-case shadow-xl leading-relaxed z-50 pointer-events-none text-left">
               <strong>Min Volatility (GMV):</strong> Optimizes weights to produce the lowest overall portfolio return volatility.
             </div>
@@ -280,9 +284,10 @@ export default function Sandbox({
           <button
             onClick={() => onOptimize('risk_parity')}
             disabled={isCalculating || assets.length === 0}
-            className="group relative px-3 py-2 text-xxs font-bold uppercase bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 hover:bg-slate-900 text-slate-300 rounded-xl transition disabled:opacity-30 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none"
+            className="group relative flex flex-col items-center justify-center text-center min-h-[56px] px-1 py-1 text-[9px] min-[370px]:text-[10px] font-bold uppercase bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 hover:bg-slate-900 text-slate-300 rounded-xl transition disabled:opacity-30 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none"
           >
-            Risk Parity (ERC)
+            <span>Risk Parity</span>
+            <span className="text-[7.5px] opacity-60 font-medium normal-case mt-0.5 leading-none">(ERC)</span>
             <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block group-focus:block w-48 p-2 bg-slate-900 border border-white/10 rounded-lg text-[9px] text-slate-300 normal-case shadow-xl leading-relaxed z-50 pointer-events-none text-left">
               <strong>Risk Parity (ERC):</strong> Allocates weights so that each asset contributes equally to the total portfolio risk.
             </div>
@@ -290,9 +295,9 @@ export default function Sandbox({
           <button
             onClick={() => onOptimize('max_div')}
             disabled={isCalculating || assets.length === 0}
-            className="group relative px-3 py-2 text-xxs font-bold uppercase bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 hover:bg-slate-900 text-slate-300 rounded-xl transition disabled:opacity-30 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none"
+            className="group relative flex flex-col items-center justify-center text-center min-h-[56px] px-1 py-1 text-[9px] min-[370px]:text-[10px] font-bold uppercase bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 hover:bg-slate-900 text-slate-300 rounded-xl transition disabled:opacity-30 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none"
           >
-            Max Diversification
+            <span className="break-words w-full px-0.5">Max Diversification</span>
             <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block group-focus:block w-48 p-2 bg-slate-900 border border-white/10 rounded-lg text-[9px] text-slate-300 normal-case shadow-xl leading-relaxed z-50 pointer-events-none text-left">
               <strong>Max Diversification:</strong> Optimizes weights to maximize the portfolio diversification ratio (weighted average volatility / portfolio volatility).
             </div>
@@ -300,9 +305,9 @@ export default function Sandbox({
           <button
             onClick={() => onOptimize('sortino')}
             disabled={isCalculating || assets.length === 0}
-            className="group relative px-3 py-2 text-xxs font-bold uppercase bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 hover:bg-slate-900 text-slate-300 rounded-xl transition disabled:opacity-30 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none"
+            className="group relative flex flex-col items-center justify-center text-center min-h-[56px] px-1 py-1 text-[9px] min-[370px]:text-[10px] font-bold uppercase bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 hover:bg-slate-900 text-slate-300 rounded-xl transition disabled:opacity-30 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 focus:outline-none"
           >
-            Max Sortino
+            <span>Max Sortino</span>
             <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block group-focus:block w-48 p-2 bg-slate-900 border border-white/10 rounded-lg text-[9px] text-slate-300 normal-case shadow-xl leading-relaxed z-50 pointer-events-none text-left">
               <strong>Max Sortino:</strong> Optimizes weights to maximize expected excess return per unit of downside deviation.
             </div>
@@ -338,6 +343,11 @@ export default function Sandbox({
                     }`}>
                       {asset.asset_type}
                     </span>
+                    {lastQuoteDates?.[asset.ticker] && (
+                      <span className="text-[9px] text-slate-400 font-medium bg-slate-900 border border-white/5 px-1.5 py-0.5 rounded" title={`Last data upload date: ${lastQuoteDates[asset.ticker]}`}>
+                        Last: {lastQuoteDates[asset.ticker]}
+                      </span>
+                    )}
                   </div>
                   
                   <div className="flex items-center gap-3">
