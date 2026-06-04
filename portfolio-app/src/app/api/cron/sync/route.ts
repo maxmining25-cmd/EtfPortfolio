@@ -6,6 +6,7 @@ import { createClient } from '@supabase/supabase-js';
 import yahooFinance from 'yahoo-finance2';
 import { isMarketClosed } from '../../../../utils/marketHolidays';
 import { generateMockPrices } from '../../../../utils/mockPrices';
+import { cleanYahooTicker } from '../../../../utils/portfolioMath';
 
 // Initialize Supabase Admin client (using service role key for system write operations)
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -39,7 +40,8 @@ async function handleSync(request: Request) {
 
   // Parse query params
   const { searchParams } = new URL(request.url);
-  const targetTicker = searchParams.get('ticker')?.toUpperCase();
+  const targetTickerRaw = searchParams.get('ticker');
+  const targetTicker = targetTickerRaw ? cleanYahooTicker(targetTickerRaw) : null;
   const customStartDate = searchParams.get('startDate'); // e.g. 2024-01-01
 
   // If in Demo Mode (no DB connection), mock success response
@@ -113,7 +115,8 @@ async function handleSync(request: Request) {
       new Map(assetData.map(item => [item.ticker, item.asset_type])).entries()
     );
 
-    for (const [ticker, assetType] of activeAssets) {
+    for (const [tickerRaw, assetType] of activeAssets) {
+      const ticker = cleanYahooTicker(tickerRaw);
       const isCrypto = assetType === 'crypto';
       
       // If market is closed and it is a stock/metal, skip
@@ -175,18 +178,59 @@ async function backfillQuotes(ticker: string, startDateStr: string, reasonRef?: 
       interval: '1d'
     })) as any[];
   } catch (err: any) {
-    console.error(`Yahoo Finance API failed for ${ticker}. Applying mock pricing fallback. Error:`, err);
-    if (reasonRef) {
-      reasonRef.warning = `Yahoo API Error: ${err.message || 'Forbidden/Rate Limited'}. Mock fallback applied.`;
+    console.error(`Yahoo Finance API library failed for ${ticker}. Trying direct CSV fetch fallback...`);
+    try {
+      const p1 = Math.floor(new Date(startDateStr).getTime() / 1000);
+      const p2 = Math.floor(new Date(endDateStr).getTime() / 1000);
+      const url = `https://query1.finance.yahoo.com/v7/finance/download/${ticker}?period1=${p1}&period2=${p2}&interval=1d&events=history&includeAdjustedClose=true`;
+      
+      const csvRes = await fetch(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.5'
+        }
+      });
+      
+      if (!csvRes.ok) throw new Error(`HTTP Error ${csvRes.status} fetching CSV from Yahoo query API.`);
+      
+      const csvText = await csvRes.text();
+      const lines = csvText.split('\n');
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        const cols = line.split(',');
+        if (cols.length < 7) continue;
+        
+        const date = cols[0];
+        const adjClose = parseFloat(cols[5]);
+        const volume = parseInt(cols[6]);
+        
+        if (!isNaN(adjClose) && date) {
+          results.push({
+            date: new Date(date),
+            adjClose,
+            volume: isNaN(volume) ? null : volume
+          });
+        }
+      }
+      if (results.length > 0 && reasonRef) {
+        reasonRef.warning = `Yahoo library failed but direct CSV fetch succeeded.`;
+      }
+    } catch (csvErr: any) {
+      console.error(`Direct CSV fetch failed for ${ticker} as well:`, csvErr);
+      if (reasonRef) {
+        reasonRef.warning = `Yahoo API Error: ${err.message || 'Error'}. Direct CSV Error: ${csvErr.message || 'Error'}. Mock fallback applied.`;
+      }
+      
+      // Generate mock EOD prices using seed-based GBM
+      const mock = generateMockPrices(ticker, startDateStr, endDateStr);
+      results = mock.dates.map((date, idx) => ({
+        date: new Date(date),
+        adjClose: mock.prices[idx],
+        volume: Math.floor(100000 + Math.random() * 900000)
+      }));
     }
-    
-    // Generate mock EOD prices using seed-based GBM
-    const mock = generateMockPrices(ticker, startDateStr, endDateStr);
-    results = mock.dates.map((date, idx) => ({
-      date: new Date(date),
-      adjClose: mock.prices[idx],
-      volume: Math.floor(100000 + Math.random() * 900000)
-    }));
   }
 
   if (!results || results.length === 0) return 0;

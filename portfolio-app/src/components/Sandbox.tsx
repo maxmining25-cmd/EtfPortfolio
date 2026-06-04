@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { DBAsset } from '../utils/dbClient';
+import { cleanYahooTicker } from '../utils/portfolioMath';
 import { 
   Lock, 
   Unlock, 
@@ -48,8 +49,9 @@ export default function Sandbox({
 
   const handleAddAsset = (e: React.FormEvent) => {
     e.preventDefault();
-    const ticker = newTicker.trim().toUpperCase();
-    if (!ticker) return;
+    const tickerRaw = newTicker.trim();
+    if (!tickerRaw) return;
+    const ticker = cleanYahooTicker(tickerRaw);
 
     // Check if asset already exists
     if (assets.some(a => a.ticker === ticker)) {
@@ -246,44 +248,62 @@ export default function Sandbox({
           <button
             onClick={() => onOptimize('equal')}
             disabled={isCalculating || assets.length === 0}
-            className="px-3 py-2 text-xxs font-bold uppercase bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 hover:bg-slate-900 text-slate-300 rounded-xl transition disabled:opacity-30"
+            className="group relative px-3 py-2 text-xxs font-bold uppercase bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 hover:bg-slate-900 text-slate-300 rounded-xl transition disabled:opacity-30"
           >
             Equal Weight
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-48 p-2 bg-slate-900 border border-white/10 rounded-lg text-[9px] text-slate-300 normal-case shadow-xl leading-relaxed z-50 pointer-events-none text-left">
+              <strong>Equal Weight (1/N):</strong> Allocates an equal percentage of weight to all assets in the portfolio.
+            </div>
           </button>
           <button
             onClick={() => onOptimize('sharpe')}
             disabled={isCalculating || assets.length === 0}
-            className="px-3 py-2 text-xxs font-bold uppercase bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 hover:bg-slate-900 text-slate-300 rounded-xl transition disabled:opacity-30"
+            className="group relative px-3 py-2 text-xxs font-bold uppercase bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 hover:bg-slate-900 text-slate-300 rounded-xl transition disabled:opacity-30"
           >
             Max Sharpe (Markowitz)
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-48 p-2 bg-slate-900 border border-white/10 rounded-lg text-[9px] text-slate-300 normal-case shadow-xl leading-relaxed z-50 pointer-events-none text-left">
+              <strong>Max Sharpe:</strong> Optimizes weights to maximize expected excess return per unit of volatility (tangency portfolio).
+            </div>
           </button>
           <button
             onClick={() => onOptimize('min_vol')}
             disabled={isCalculating || assets.length === 0}
-            className="px-3 py-2 text-xxs font-bold uppercase bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 hover:bg-slate-900 text-slate-300 rounded-xl transition disabled:opacity-30"
+            className="group relative px-3 py-2 text-xxs font-bold uppercase bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 hover:bg-slate-900 text-slate-300 rounded-xl transition disabled:opacity-30"
           >
             Min Volatility (GMV)
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-48 p-2 bg-slate-900 border border-white/10 rounded-lg text-[9px] text-slate-300 normal-case shadow-xl leading-relaxed z-50 pointer-events-none text-left">
+              <strong>Min Volatility (GMV):</strong> Optimizes weights to produce the lowest overall portfolio return volatility.
+            </div>
           </button>
           <button
             onClick={() => onOptimize('risk_parity')}
             disabled={isCalculating || assets.length === 0}
-            className="px-3 py-2 text-xxs font-bold uppercase bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 hover:bg-slate-900 text-slate-300 rounded-xl transition disabled:opacity-30"
+            className="group relative px-3 py-2 text-xxs font-bold uppercase bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 hover:bg-slate-900 text-slate-300 rounded-xl transition disabled:opacity-30"
           >
             Risk Parity (ERC)
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-48 p-2 bg-slate-900 border border-white/10 rounded-lg text-[9px] text-slate-300 normal-case shadow-xl leading-relaxed z-50 pointer-events-none text-left">
+              <strong>Risk Parity (ERC):</strong> Allocates weights so that each asset contributes equally to the total portfolio risk.
+            </div>
           </button>
           <button
             onClick={() => onOptimize('max_div')}
             disabled={isCalculating || assets.length === 0}
-            className="px-3 py-2 text-xxs font-bold uppercase bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 hover:bg-slate-900 text-slate-300 rounded-xl transition disabled:opacity-30"
+            className="group relative px-3 py-2 text-xxs font-bold uppercase bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 hover:bg-slate-900 text-slate-300 rounded-xl transition disabled:opacity-30"
           >
             Max Diversification
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-48 p-2 bg-slate-900 border border-white/10 rounded-lg text-[9px] text-slate-300 normal-case shadow-xl leading-relaxed z-50 pointer-events-none text-left">
+              <strong>Max Diversification:</strong> Optimizes weights to maximize the portfolio diversification ratio (weighted average volatility / portfolio volatility).
+            </div>
           </button>
           <button
             onClick={() => onOptimize('sortino')}
             disabled={isCalculating || assets.length === 0}
-            className="px-3 py-2 text-xxs font-bold uppercase bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 hover:bg-slate-900 text-slate-300 rounded-xl transition disabled:opacity-30"
+            className="group relative px-3 py-2 text-xxs font-bold uppercase bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 hover:bg-slate-900 text-slate-300 rounded-xl transition disabled:opacity-30"
           >
             Max Sortino
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-48 p-2 bg-slate-900 border border-white/10 rounded-lg text-[9px] text-slate-300 normal-case shadow-xl leading-relaxed z-50 pointer-events-none text-left">
+              <strong>Max Sortino:</strong> Optimizes weights to maximize expected excess return per unit of downside deviation.
+            </div>
           </button>
         </div>
       </div>

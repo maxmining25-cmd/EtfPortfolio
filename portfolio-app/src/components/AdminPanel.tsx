@@ -16,8 +16,10 @@ import {
   adminDeleteUser,
   adminMassDeleteUsers,
   adminMassDeleteQuotes,
+  adminUpsertQuotes,
   DBQuote
 } from '../utils/dbClient';
+import { cleanYahooTicker } from '../utils/portfolioMath';
 import { 
   Users, 
   Shield, 
@@ -38,7 +40,8 @@ import {
   X,
   Globe,
   Coins,
-  DollarSign
+  DollarSign,
+  Upload
 } from 'lucide-react';
 
 interface AdminPanelProps {
@@ -138,7 +141,7 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
 
   const handleWipeTickerQuotes = async () => {
     if (!quoteSearch.trim()) return;
-    const tickerToWipe = quoteSearch.trim().toUpperCase();
+    const tickerToWipe = cleanYahooTicker(quoteSearch);
     if (!confirm(`Are you sure you want to delete ALL EOD quotes for ticker "${tickerToWipe}"? This cannot be undone.`)) return;
     try {
       setError(null);
@@ -253,6 +256,13 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
   const [syncStartDate, setSyncStartDate] = useState('2024-01-01');
   const [syncingTicker, setSyncingTicker] = useState<string | null>(null);
 
+  // CSV File Sync State
+  const [uploadTicker, setUploadTicker] = useState('');
+  const [csvContent, setCsvContent] = useState('');
+  const [uploadingCSV, setUploadingCSV] = useState(false);
+  const [csvPreviewMsg, setCsvPreviewMsg] = useState<string | null>(null);
+  const [csvPreviewError, setCsvPreviewError] = useState<string | null>(null);
+
   // Predefined Popular Ticker Directory
   const popularAssets = [
     { ticker: 'SPY', name: 'S&P 500 Index', type: 'etf' },
@@ -286,8 +296,9 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
       setAddingQuote(true);
       setError(null);
       setSuccess(null);
+      const tickerClean = cleanYahooTicker(addTicker);
       const newQuote = await adminAddQuote({
-        ticker: addTicker.trim().toUpperCase(),
+        ticker: tickerClean,
         date: addDate,
         adj_close: parseFloat(addPrice),
         volume: addVolume ? parseInt(addVolume) : null
@@ -348,7 +359,7 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
 
   const handleSyncFromYahoo = async (tickerToSync: string, startStr: string) => {
     if (!tickerToSync.trim()) return;
-    const tickerClean = tickerToSync.trim().toUpperCase();
+    const tickerClean = cleanYahooTicker(tickerToSync);
     try {
       setSyncingTicker(tickerClean);
       setError(null);
@@ -367,6 +378,119 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
       setError(`Failed to sync from Yahoo Finance: ${err.message}`);
     } finally {
       setSyncingTicker(null);
+    }
+  };
+
+  const handleCSVFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Set ticker from filename (e.g. SPY.csv -> SPY)
+    const filename = file.name;
+    const dotIdx = filename.lastIndexOf('.');
+    const nameWithoutExt = dotIdx !== -1 ? filename.substring(0, dotIdx) : filename;
+    // Guess ticker by cleaning basic chars
+    const guessedTicker = nameWithoutExt.replace('-USD', '').replace('_', '').toUpperCase();
+    setUploadTicker(cleanYahooTicker(guessedTicker));
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result as string;
+      setCsvContent(text);
+      // Parse preview
+      try {
+        const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+        if (lines.length <= 1) {
+          setCsvPreviewError('CSV file is empty or missing headers.');
+          return;
+        }
+        const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+        const dateIdx = headers.indexOf('date');
+        const adjCloseIdx = headers.indexOf('adj close');
+        const closeIdx = headers.indexOf('close');
+        
+        const targetCloseIdx = adjCloseIdx !== -1 ? adjCloseIdx : closeIdx;
+        
+        if (dateIdx === -1 || targetCloseIdx === -1) {
+          setCsvPreviewError('Missing required columns: Date, and Adj Close or Close.');
+          return;
+        }
+        
+        let parsedCount = 0;
+        for (let i = 1; i < lines.length; i++) {
+          const cols = lines[i].split(',');
+          if (cols[dateIdx] && !isNaN(parseFloat(cols[targetCloseIdx]))) {
+            parsedCount++;
+          }
+        }
+        
+        setCsvPreviewError(null);
+        setCsvPreviewMsg(`Parsed successfully. Detected ${parsedCount} quote rows. Ready to upload.`);
+      } catch (err: any) {
+        setCsvPreviewError('Failed to parse CSV: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleUploadCSV = async () => {
+    if (!uploadTicker.trim() || !csvContent) return;
+    const tickerClean = cleanYahooTicker(uploadTicker);
+    try {
+      setUploadingCSV(true);
+      setError(null);
+      setSuccess(null);
+
+      const lines = csvContent.split('\n').map(l => l.trim()).filter(Boolean);
+      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+      const dateIdx = headers.indexOf('date');
+      const adjCloseIdx = headers.indexOf('adj close');
+      const closeIdx = headers.indexOf('close');
+      const volIdx = headers.indexOf('volume');
+      const targetCloseIdx = adjCloseIdx !== -1 ? adjCloseIdx : closeIdx;
+
+      const quotesToUpload: any[] = [];
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(',');
+        if (cols.length <= Math.max(dateIdx, targetCloseIdx)) continue;
+        const rawDate = cols[dateIdx];
+        const rawClose = parseFloat(cols[targetCloseIdx]);
+        const rawVol = volIdx !== -1 ? parseInt(cols[volIdx]) : null;
+
+        if (rawDate && !isNaN(rawClose)) {
+          let formattedDate = rawDate;
+          try {
+            formattedDate = new Date(rawDate).toISOString().split('T')[0];
+          } catch (_) {}
+          
+          quotesToUpload.push({
+            ticker: tickerClean,
+            date: formattedDate,
+            adj_close: rawClose,
+            volume: isNaN(rawVol as any) || rawVol === null ? null : rawVol
+          });
+        }
+      }
+
+      if (quotesToUpload.length === 0) {
+        throw new Error('No valid quote records found in the CSV.');
+      }
+
+      const res = await adminUpsertQuotes(quotesToUpload);
+      setSuccess(`Imported ${quotesToUpload.length} quotes for ${tickerClean} successfully.`);
+      
+      // Reset state
+      setCsvContent('');
+      setUploadTicker('');
+      setCsvPreviewMsg(null);
+      const fileInput = document.getElementById('csvFileInput') as HTMLInputElement;
+      if (fileInput) fileInput.value = '';
+      
+      await fetchQuotes(quoteSearch || undefined);
+    } catch (err: any) {
+      setError('CSV Import Failed: ' + err.message);
+    } finally {
+      setUploadingCSV(false);
     }
   };
 
@@ -689,6 +813,71 @@ export default function AdminPanel({ onBack }: AdminPanelProps) {
                   >
                     <RefreshCw size={12} className={syncingTicker === syncTicker ? 'animate-spin' : ''} />
                     Sync Yahoo EOD
+                  </button>
+                </div>
+              </div>
+
+              {/* Form 1.5: EOD CSV File Upload */}
+              <div className="p-5 bg-slate-900/60 border border-white/5 rounded-2xl space-y-4">
+                <div className="flex items-center gap-2 text-indigo-400">
+                  <Upload size={18} />
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-200">
+                    Upload EOD CSV File
+                  </h3>
+                </div>
+                <p className="text-[10px] text-slate-400 leading-normal">
+                  Upload a Yahoo Finance downloaded historical CSV file. Files are automatically parsed and merged.
+                </p>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-[10px] text-slate-400 uppercase font-bold mb-1 block">Ticker Symbol</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. SPY (auto-fills from filename)"
+                      value={uploadTicker}
+                      onChange={(e) => setUploadTicker(e.target.value.toUpperCase())}
+                      className="w-full bg-slate-950 border border-white/10 rounded-xl py-1.5 px-3 text-xs text-white uppercase placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-slate-400 uppercase font-bold mb-1 block">Select CSV File</label>
+                    <input
+                      id="csvFileInput"
+                      type="file"
+                      accept=".csv"
+                      onChange={handleCSVFileChange}
+                      className="w-full text-xxs text-slate-400 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[10px] file:font-semibold file:bg-slate-800 file:text-indigo-400 hover:file:bg-slate-700 cursor-pointer"
+                    />
+                  </div>
+
+                  {csvPreviewError && (
+                    <div className="text-[10px] text-red-400 bg-red-950/20 border border-red-500/10 p-2 rounded-lg leading-snug">
+                      {csvPreviewError}
+                    </div>
+                  )}
+
+                  {csvPreviewMsg && (
+                    <div className="text-[10px] text-emerald-400 bg-emerald-950/20 border border-emerald-500/10 p-2 rounded-lg leading-snug">
+                      {csvPreviewMsg}
+                    </div>
+                  )}
+
+                  <button
+                    onClick={handleUploadCSV}
+                    disabled={uploadingCSV || !uploadTicker.trim() || !csvContent}
+                    className="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xxs uppercase tracking-wider transition flex items-center justify-center gap-1.5 disabled:opacity-40"
+                  >
+                    {uploadingCSV ? (
+                      <>
+                        <RefreshCw size={12} className="animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <Upload size={12} />
+                        Parse & Upload CSV
+                      </>
+                    )}
                   </button>
                 </div>
               </div>

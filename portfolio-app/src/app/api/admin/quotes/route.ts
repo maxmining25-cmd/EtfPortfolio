@@ -60,9 +60,33 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { quote } = await request.json();
+    const { quote, quotes } = await request.json();
+
+    // Batch upload scenario
+    if (quotes && Array.isArray(quotes)) {
+      if (quotes.length === 0) {
+        return NextResponse.json({ success: true, count: 0, message: 'Empty quotes array provided.' });
+      }
+
+      const rows = quotes.map((q: any) => ({
+        ticker: q.ticker.toUpperCase(),
+        date: q.date,
+        adj_close: Number(q.adj_close),
+        volume: q.volume ? Number(q.volume) : null
+      }));
+
+      const { data, error } = await supabaseAdmin!
+        .from('quotes')
+        .upsert(rows, { onConflict: 'ticker,date' })
+        .select();
+
+      if (error) throw error;
+      return NextResponse.json({ success: true, count: rows.length, data });
+    }
+
+    // Single quote scenario
     if (!quote || !quote.ticker || !quote.date || !quote.adj_close) {
-      return NextResponse.json({ error: 'Missing required quote fields (ticker, date, adj_close).' }, { status: 400 });
+      return NextResponse.json({ error: 'Missing required quote fields (ticker, date, adj_close or quotes array).' }, { status: 400 });
     }
 
     const { data, error } = await supabaseAdmin!

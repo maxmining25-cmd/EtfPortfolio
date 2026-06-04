@@ -3,6 +3,7 @@
 
 import { supabase, isDemoMode } from '../context/AuthContext';
 import { generateMockPrices } from './mockPrices';
+import { cleanYahooTicker } from './portfolioMath';
 
 export interface DBPortfolio {
   id: string;
@@ -430,11 +431,18 @@ export async function getQuotesForTickers(
 
   if (!supabase) return result;
   
+  // Clean tickers for DB query
+  const cleanedTickers = tickers.map(cleanYahooTicker);
+  const tickerMap: Record<string, string> = {}; // Cleaned -> Original
+  tickers.forEach((t, idx) => {
+    tickerMap[cleanedTickers[idx]] = t;
+  });
+
   // Real Mode DB Query
   const { data, error } = await supabase
     .from('quotes')
     .select('ticker, date, adj_close')
-    .in('ticker', tickers)
+    .in('ticker', cleanedTickers)
     .gte('date', startDate)
     .lte('date', endDate)
     .order('date', { ascending: true });
@@ -448,23 +456,23 @@ export async function getQuotesForTickers(
   
   if (data) {
     data.forEach((row: any) => {
-      if (result[row.ticker]) {
-        result[row.ticker].dates.push(row.date);
-        result[row.ticker].prices.push(Number(row.adj_close));
+      const originalTicker = tickerMap[row.ticker] || row.ticker;
+      if (result[originalTicker]) {
+        result[originalTicker].dates.push(row.date);
+        result[originalTicker].prices.push(Number(row.adj_close));
       }
     });
   }
 
   // Check if any ticker has zero data in DB
-  // In live mode, client will call backfill endpoint via POST /api/quotes/backfill
-  // to fetch history asynchronously from Yahoo.
   const missingTickers = tickers.filter(t => result[t].dates.length === 0);
   if (missingTickers.length > 0) {
     console.warn(`Tickers [${missingTickers.join(', ')}] have no quotes in DB. Running client-side fetch...`);
     // Run an async backfill trigger
     missingTickers.forEach(async ticker => {
       try {
-        await fetch('/api/cron/sync?ticker=' + encodeURIComponent(ticker), {
+        const cleanedMissing = cleanYahooTicker(ticker);
+        await fetch('/api/cron/sync?ticker=' + encodeURIComponent(cleanedMissing), {
           method: 'POST',
         });
       } catch (err) {
@@ -674,6 +682,42 @@ export async function adminAddQuote(quote: Partial<DBQuote>): Promise<DBQuote> {
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Failed to add EOD quote.');
+  return data;
+}
+
+export async function adminUpsertQuotes(quotes: Partial<DBQuote>[]): Promise<{ success: boolean; count: number }> {
+  if (isDemoMode) {
+    const list = localStorage.getItem('aurawealth_demo_quotes');
+    const customQuotes = list ? JSON.parse(list) : [];
+    
+    const newQuotes: DBQuote[] = quotes.map(q => ({
+      id: 'quote-' + Math.random().toString(36).substring(2, 9),
+      ticker: (q.ticker || 'SPY').toUpperCase(),
+      date: q.date || new Date().toISOString().split('T')[0],
+      adj_close: Number(q.adj_close) || 100.0,
+      volume: q.volume !== undefined && q.volume !== null ? Number(q.volume) : null
+    }));
+
+    const keyMap = new Set(newQuotes.map(q => `${q.ticker}-${q.date}`));
+    const remaining = customQuotes.filter((q: DBQuote) => !keyMap.has(`${q.ticker}-${q.date}`));
+    const merged = [...remaining, ...newQuotes];
+    
+    localStorage.setItem('aurawealth_demo_quotes', JSON.stringify(merged));
+    return { success: true, count: newQuotes.length };
+  }
+
+  if (!supabase) throw new Error('Supabase client not initialized.');
+  const { data: { session } } = await supabase.auth.getSession();
+  const res = await fetch('/api/admin/quotes', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session?.access_token || ''}`
+    },
+    body: JSON.stringify({ quotes })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Failed to batch upload quotes.');
   return data;
 }
 

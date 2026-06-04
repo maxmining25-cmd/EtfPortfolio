@@ -8,6 +8,28 @@ export interface AssetData {
   prices: number[]; // Adjusted close prices
 }
 
+const FIAT_CURRENCIES = ['USD', 'EUR', 'GBP', 'JPY', 'AUD', 'CAD', 'CHF', 'NZD', 'HKD', 'SGD', 'SEK', 'NOK', 'DKK', 'TRY', 'MXN', 'ZAR', 'CNH', 'RUB', 'INR'];
+
+export function cleanYahooTicker(ticker: string): string {
+  let clean = ticker.trim().toUpperCase();
+  clean = clean.replace(/\//g, '');
+  
+  if (clean.length === 6) {
+    const base = clean.substring(0, 3);
+    const quote = clean.substring(3, 6);
+    if (FIAT_CURRENCIES.includes(base) && FIAT_CURRENCIES.includes(quote)) {
+      clean = clean + '=X';
+    } else if (FIAT_CURRENCIES.includes(quote)) {
+      clean = base + '-' + quote;
+    }
+  }
+  
+  if (clean === 'GOLD') clean = 'GC=F';
+  if (clean === 'SILVER') clean = 'SI=F';
+  
+  return clean;
+}
+
 export const US_INFLATION_TABLE: Record<number, number> = {
   2000: 172.20,
   2001: 177.07,

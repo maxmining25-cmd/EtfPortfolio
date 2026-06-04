@@ -220,7 +220,12 @@ export default function Analytics({
         {/* CAGR */}
         <div className="glass-card p-4 border border-white/5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-xxs font-bold uppercase tracking-wider">CAGR</span>
+            <div className="group relative flex items-center gap-1 cursor-help">
+              <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-500">CAGR</span>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-52 p-2 bg-slate-900 border border-white/10 rounded-lg text-[10px] text-slate-300 shadow-xl leading-relaxed z-50 pointer-events-none text-left font-normal normal-case">
+                <strong>Compound Annual Growth Rate:</strong> The smoothed annual rate at which an investment grows, assuming profits are compounded annually.
+              </div>
+            </div>
             <TrendingUp size={16} className="text-indigo-400" />
           </div>
           <div>
@@ -234,7 +239,12 @@ export default function Analytics({
         {/* Max Drawdown */}
         <div className="glass-card p-4 border border-white/5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-xxs font-bold uppercase tracking-wider">Max Drawdown</span>
+            <div className="group relative flex items-center gap-1 cursor-help">
+              <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-500">Max Drawdown</span>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-52 p-2 bg-slate-900 border border-white/10 rounded-lg text-[10px] text-slate-300 shadow-xl leading-relaxed z-50 pointer-events-none text-left font-normal normal-case">
+                <strong>Max Drawdown:</strong> The largest peak-to-trough drop in portfolio value before a new peak is reached, indicating historical downside risk.
+              </div>
+            </div>
             <ArrowDownRight size={16} className="text-red-400" />
           </div>
           <div>
@@ -250,7 +260,12 @@ export default function Analytics({
         {/* Sharpe Ratio */}
         <div className="glass-card p-4 border border-white/5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-xxs font-bold uppercase tracking-wider">Sharpe Ratio</span>
+            <div className="group relative flex items-center gap-1 cursor-help">
+              <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-500">Sharpe Ratio</span>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-52 p-2 bg-slate-900 border border-white/10 rounded-lg text-[10px] text-slate-300 shadow-xl leading-relaxed z-50 pointer-events-none text-left font-normal normal-case">
+                <strong>Sharpe Ratio:</strong> Measures excess return per unit of total risk (volatility). Higher values indicate better risk-adjusted returns (uses UI risk-free rate, default 4%).
+              </div>
+            </div>
             <Percent size={16} className="text-indigo-400" />
           </div>
           <div>
@@ -264,7 +279,12 @@ export default function Analytics({
         {/* Sortino Ratio */}
         <div className="glass-card p-4 border border-white/5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-xxs font-bold uppercase tracking-wider">Sortino Ratio</span>
+            <div className="group relative flex items-center gap-1 cursor-help">
+              <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-500">Sortino Ratio</span>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-52 p-2 bg-slate-900 border border-white/10 rounded-lg text-[10px] text-slate-300 shadow-xl leading-relaxed z-50 pointer-events-none text-left font-normal normal-case">
+                <strong>Sortino Ratio:</strong> Measures excess return per unit of downside deviation. Unlike Sharpe, it only penalizes harmful negative return volatility.
+              </div>
+            </div>
             <Flame size={16} className="text-violet-400 animate-pulse" />
           </div>
           <div>
@@ -278,7 +298,12 @@ export default function Analytics({
         {/* Extra Statistics Grid Row */}
         <div className="glass-card p-4 border border-white/5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-xxs font-bold uppercase tracking-wider">Calmar Ratio</span>
+            <div className="group relative flex items-center gap-1 cursor-help">
+              <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-500">Calmar Ratio</span>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-52 p-2 bg-slate-900 border border-white/10 rounded-lg text-[10px] text-slate-300 shadow-xl leading-relaxed z-50 pointer-events-none text-left font-normal normal-case">
+                <strong>Calmar Ratio:</strong> The ratio of CAGR to Max Drawdown over the backtest period. Measures return reward relative to maximum historical drawdown risk.
+              </div>
+            </div>
             <Layers size={14} className="text-slate-400" />
           </div>
           <div>
@@ -289,7 +314,12 @@ export default function Analytics({
 
         <div className="glass-card p-4 border border-white/5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-xxs font-bold uppercase tracking-wider">Portfolio Beta</span>
+            <div className="group relative flex items-center gap-1 cursor-help">
+              <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-500">Portfolio Beta</span>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-52 p-2 bg-slate-900 border border-white/10 rounded-lg text-[10px] text-slate-300 shadow-xl leading-relaxed z-50 pointer-events-none text-left font-normal normal-case">
+                <strong>Portfolio Beta:</strong> Measures systematic risk relative to the benchmark ({benchmarkTicker}). A Beta of 1.0 matches benchmark volatility; &gt;1.0 is more sensitive, &lt;1.0 is less.
+              </div>
+            </div>
             <Activity size={14} className="text-slate-400" />
           </div>
           <div>
@@ -300,7 +330,12 @@ export default function Analytics({
 
         <div className="glass-card p-4 border border-white/5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-xxs font-bold uppercase tracking-wider">Jensen's Alpha</span>
+            <div className="group relative flex items-center gap-1 cursor-help">
+              <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-500">Jensen's Alpha</span>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-52 p-2 bg-slate-900 border border-white/10 rounded-lg text-[10px] text-slate-300 shadow-xl leading-relaxed z-50 pointer-events-none text-left font-normal normal-case">
+                <strong>Jensen's Alpha:</strong> The annualized excess return earned by the portfolio relative to the benchmark, adjusting for systematic risk (Beta). Positive alpha indicates outperformance.
+              </div>
+            </div>
             <TrendingUp size={14} className="text-slate-400" />
           </div>
           <div>
@@ -313,7 +348,12 @@ export default function Analytics({
 
         <div className="glass-card p-4 border border-white/5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-xxs font-bold uppercase tracking-wider">Information Ratio</span>
+            <div className="group relative flex items-center gap-1 cursor-help">
+              <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-500">Information Ratio</span>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-52 p-2 bg-slate-900 border border-white/10 rounded-lg text-[10px] text-slate-300 shadow-xl leading-relaxed z-50 pointer-events-none text-left font-normal normal-case">
+                <strong>Information Ratio:</strong> Measures active return over the benchmark divided by Tracking Error (volatility of excess returns). Shows how consistently the portfolio beats the benchmark.
+              </div>
+            </div>
             <HelpCircle size={14} className="text-slate-400" />
           </div>
           <div>
@@ -325,7 +365,12 @@ export default function Analytics({
         {/* Downside Deviation */}
         <div className="glass-card p-4 border border-white/5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-xxs font-bold uppercase tracking-wider">Downside Vol</span>
+            <div className="group relative flex items-center gap-1 cursor-help">
+              <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-500">Downside Vol</span>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-52 p-2 bg-slate-900 border border-white/10 rounded-lg text-[10px] text-slate-300 shadow-xl leading-relaxed z-50 pointer-events-none text-left font-normal normal-case">
+                <strong>Downside Deviation:</strong> Annualized standard deviation of only negative asset returns. Measures bad volatility, ignoring positive swings.
+              </div>
+            </div>
             <Layers size={14} className="text-indigo-400" />
           </div>
           <div>
@@ -337,7 +382,12 @@ export default function Analytics({
         {/* Daily 95% VaR */}
         <div className="glass-card p-4 border border-white/5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-xxs font-bold uppercase tracking-wider">Daily 95% VaR</span>
+            <div className="group relative flex items-center gap-1 cursor-help">
+              <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-500">Daily 95% VaR</span>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-52 p-2 bg-slate-900 border border-white/10 rounded-lg text-[10px] text-slate-300 shadow-xl leading-relaxed z-50 pointer-events-none text-left font-normal normal-case">
+                <strong>Value at Risk (VaR):</strong> The maximum expected daily loss at a 95% confidence level under normal conditions. There is a 5% chance of a daily loss exceeding this value.
+              </div>
+            </div>
             <HelpCircle size={14} className="text-red-400" />
           </div>
           <div>
@@ -349,7 +399,12 @@ export default function Analytics({
         {/* Daily 95% CVaR */}
         <div className="glass-card p-4 border border-white/5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-xxs font-bold uppercase tracking-wider">Daily 95% CVaR</span>
+            <div className="group relative flex items-center gap-1 cursor-help">
+              <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-500">Daily 95% CVaR</span>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-52 p-2 bg-slate-900 border border-white/10 rounded-lg text-[10px] text-slate-300 shadow-xl leading-relaxed z-50 pointer-events-none text-left font-normal normal-case">
+                <strong>Conditional Value at Risk (CVaR):</strong> Also called Expected Shortfall. The average expected loss on days when the portfolio loss breaches the 95% VaR threshold.
+              </div>
+            </div>
             <HelpCircle size={14} className="text-red-400" />
           </div>
           <div>
@@ -361,7 +416,12 @@ export default function Analytics({
         {/* Best / Worst Year */}
         <div className="glass-card p-4 border border-white/5 flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400 mb-2">
-            <span className="text-xxs font-bold uppercase tracking-wider">Best / Worst Year</span>
+            <div className="group relative flex items-center gap-1 cursor-help">
+              <span className="text-xxs font-bold uppercase tracking-wider border-b border-dashed border-slate-500">Best / Worst Year</span>
+              <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block w-52 p-2 bg-slate-900 border border-white/10 rounded-lg text-[10px] text-slate-300 shadow-xl leading-relaxed z-50 pointer-events-none text-left font-normal normal-case">
+                <strong>Best/Worst Calendar Year:</strong> The highest and lowest total returns generated by the portfolio during any single full calendar year (January–December).
+              </div>
+            </div>
             <TrendingUp size={14} className="text-emerald-400" />
           </div>
           <div className="flex items-center gap-3">
